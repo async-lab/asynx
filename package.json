@@ -1,4 +1,6 @@
 {
+  "name": "asynx",
+  "version": "0.0.0",
   "workspaces": [
     "ts-sdks/*"
   ]
