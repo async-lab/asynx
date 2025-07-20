@@ -11,6 +11,10 @@ configs:
             reverse_proxy custodian:8888
           }
         }
+
+        handle * {
+          respond "404 Not Found" 404
+        }
       }
 
 services:

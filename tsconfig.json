@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "lib": ["ESNext", "dom"],
+    "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "strict": true
   }
