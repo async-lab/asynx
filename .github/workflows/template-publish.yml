@@ -1,0 +1,24 @@
+name: publish
+
+on:
+  workflow_call:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./.github/actions/setup
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build And Publish
+        run: |
+          PREFIX=ghcr.io/${{ github.repository }}
+          KO_DOCKER_REPO=${PREFIX}/auth ko build -B ./auth/cmd

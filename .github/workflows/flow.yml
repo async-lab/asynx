@@ -1,0 +1,16 @@
+name: flow
+
+on:
+  push:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    uses: ./.github/workflows/template-publish.yml
+
+  deploy:
+    needs: [publish]
+    uses: ./.github/workflows/template-deploy.yml
