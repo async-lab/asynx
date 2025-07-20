@@ -6,8 +6,10 @@ configs:
       }
 
       :80 {
-        handle_path /auth* {
-          reverse_proxy auth:8080
+        handle_path /api/v1* {
+          handle_path /custodian* {
+            reverse_proxy custodian:8888
+          }
         }
       }
 
@@ -20,6 +22,6 @@ services:
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
-  auth:
-    image: ghcr.io/async-lab/asynx/auth/cmd:latest
+  custodian:
+    image: ghcr.io/async-lab/asynx/custodian/cmd:latest
     restart: unless-stopped
