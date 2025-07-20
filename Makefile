@@ -5,6 +5,7 @@ GOZERO_MODULES := custodian
 define GENERATE_BY_GOCTL
 	goctl api go -api ./api/$(1).api -dir ./$(1)
 	goctl api swagger -api ./api/$(1).api -dir ./swagger
+	goctl api ts -api ./api/$(1).api -dir ./ts-sdks/$(1)-sdk
 endef
 
 
