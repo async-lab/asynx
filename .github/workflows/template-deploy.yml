@@ -21,5 +21,4 @@ jobs:
       - name: Deploy
         run: |
           export COMPOSE_PROJECT_NAME=asynx
-          docker compose pull
-          docker compose up -d
+          docker compose up -d --pull always --remove-orphans
