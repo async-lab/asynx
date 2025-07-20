@@ -2,9 +2,9 @@ defaultBaseImage: cgr.dev/chainguard/static
 defaultLdflags:
   - -s -w
 builds:
-  - id: auth
-    dir: ./auth
-    main: ./cmd
+  - id: custodian
+    dir: ./custodian
+    main: .
     flags: []
     ldflags:
       - -X main.version={{.Git.ShortCommit}}
