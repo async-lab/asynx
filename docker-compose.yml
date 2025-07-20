@@ -23,5 +23,5 @@ services:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
   custodian:
-    image: ghcr.io/async-lab/asynx/custodian/cmd:latest
+    image: ghcr.io/async-lab/asynx/custodian:latest
     restart: unless-stopped
