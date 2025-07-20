@@ -1,0 +1,25 @@
+configs:
+  caddyfile:
+    content: |
+      {
+        auto_https off
+      }
+
+      :80 {
+        handle_path /auth* {
+          reverse_proxy auth:8080
+        }
+      }
+
+services:
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+  auth:
+    image: ghcr.io/async-lab/asynx/auth/cmd:latest
+    restart: unless-stopped
