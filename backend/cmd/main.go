@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
 )
 
 func initRouter(r *gin.Engine, embedFS embed.FS) error {
@@ -34,7 +35,8 @@ func initRouter(r *gin.Engine, embedFS embed.FS) error {
 			return
 		}
 
-		c.FileFromFS("index.html", http.FS(clientDistFS))
+		http.ServeFileFS(c.Writer, c.Request, clientDistFS, "index.html")
+		c.Abort()
 	})
 
 	ldapCfg, err := env.ParseAs[config.ConfigLDAP]()
