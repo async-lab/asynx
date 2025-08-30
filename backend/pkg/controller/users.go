@@ -29,46 +29,17 @@ func NewControllerUser(g *gin.RouterGroup, serviceManager *service.ServiceManage
 	return ctl
 }
 
-func (ctl *ControllerUser) processGetWithAuthority(authUid string, uid string, role security.Role) (*entity.User, *gggin.HttpError) {
-	if uid == "me" {
-		uid = authUid
-	}
-
-	var (
-		user *entity.User
-		err  error
-	)
-
-	switch role {
-	case security.RoleAdmin:
-		user, err = ctl.serviceManager.FindUserByUid(uid)
-	case security.RoleDefault:
-		user, err = ctl.serviceManager.FindUserByOuAndUid(security.OuUserMember, uid)
-	default:
-		if authUid != uid {
-			return nil, nil
-		}
-
-		user, err = ctl.serviceManager.FindUserByUid(uid)
-	}
-
-	if err != nil {
-		var httpErr *gggin.HttpError
-		if errors.As(err, &httpErr) {
-			return nil, httpErr
-		}
-		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
-	}
-
-	return user, nil
-}
-
 // @Summary      获取用户列表
-// @Tags         user
+// @Description  获取所有用户列表信息。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Success      200  {object} object{data=[]entity.User}
-// @Router       /api/users [get]
+// @Success      200  {object} object{data=[]entity.User} "成功返回用户列表"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users [get]
+// @Security     BearerAuth
 func (ctl *ControllerUser) HandleList(c *gin.Context) (*gggin.Response[[]*entity.User], *gggin.HttpError) {
 	_, role, guardErr := security.Guard(c, security.RoleDefault)
 	if guardErr != nil {
@@ -92,21 +63,32 @@ func (ctl *ControllerUser) HandleList(c *gin.Context) (*gggin.Response[[]*entity
 }
 
 // @Summary      获取用户信息
-// @Tags         user
+// @Description  根据用户ID获取用户详细信息。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "用户ID"
-// @Success      200  {object} object{data=entity.User}
-// @Router       /api/users/{id} [get]
+// @Param        uid   path      string  true  "用户ID，使用 'me' 可获取当前用户信息"
+// @Success      200  {object} object{data=entity.User} "成功返回用户信息"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      404  {object} object{data=string} "用户不存在"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/{uid} [get]
+// @Security     BearerAuth
 func (ctl *ControllerUser) HandleGet(c *gin.Context) (*gggin.Response[*entity.User], *gggin.HttpError) {
 	authUid, role, guardErr := security.Guard(c, security.RoleRestricted)
 	if guardErr != nil {
 		return nil, guardErr
 	}
 
-	user, err := ctl.processGetWithAuthority(authUid, c.Param("uid"), role)
+	user, err := ctl.serviceManager.GetUserWithAuthority(authUid, c.Param("uid"), role)
 	if err != nil {
-		return nil, err
+		var httpErr *gggin.HttpError
+		if errors.As(err, &httpErr) {
+			return nil, httpErr
+		}
+		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
 	}
 
 	return gggin.NewResponse(user), nil
@@ -117,15 +99,22 @@ type RequestChangePassword struct {
 }
 
 // @Summary      修改密码
-// @Tags         user
+// @Description  修改指定用户的密码。需要 RESTRICTED 或更高权限。ADMIN 用户可以修改任何用户密码，其他用户只能修改自己的密码。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        uid   path      string  true  "用户ID"
+// @Param        uid   path      string  true  "用户ID，使用 'me' 可修改当前用户密码"
 // @Param        body  body      RequestChangePassword  true  "修改密码请求"
-// @Success      200  {object} object{data=string} "Success response with 'ok'"
-// @Router       /api/users/{id}/password [put]
+// @Success      200  {object} object{data=string} "成功修改密码，返回 'ok'"
+// @Failure      400  {object} object{data=string} "请求参数错误或密码不符合要求"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      404  {object} object{data=string} "用户不存在"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/{uid}/password [put]
+// @Security     BearerAuth
 func (ctl *ControllerUser) HandleChangePassword(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
-	authUid, role, guardErr := security.Guard(c, security.RoleDefault)
+	authUid, role, guardErr := security.Guard(c, security.RoleRestricted)
 	if guardErr != nil {
 		return nil, guardErr
 	}
@@ -164,21 +153,32 @@ func (ctl *ControllerUser) HandleChangePassword(c *gin.Context) (*gggin.Response
 }
 
 // @Summary      获取账号类型
-// @Tags         user
+// @Description  获取指定用户的账号类型（system|member|external）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        uid   path      string  true  "用户ID"
-// @Success      200  {object} object{data=string} ""system|member|external""
-// @Router       /api/users/{id}/category [get]
-func (ctl *ControllerUser) HandleGetCategory(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
+// @Param        uid   path      string  true  "用户ID，使用 'me' 可获取当前用户类型"
+// @Success      200  {object} object{data=string} "成功返回账号类型: system|member|external"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      404  {object} object{data=string} "用户不存在"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/{uid}/category [get]
+// @Security     BearerAuth
+func (ctl *ControllerUser) HandleGetCategory(c *gin.Context) (*gggin.Response[security.OuUser], *gggin.HttpError) {
 	authUid, role, guardErr := security.Guard(c, security.RoleRestricted)
 	if guardErr != nil {
 		return nil, guardErr
 	}
 
-	user, processErr := ctl.processGetWithAuthority(authUid, c.Param("uid"), role)
-	if processErr != nil {
-		return nil, processErr
+	user, err := ctl.serviceManager.GetUserWithAuthority(authUid, c.Param("uid"), role)
+	if err != nil {
+		var httpErr *gggin.HttpError
+		if errors.As(err, &httpErr) {
+			return nil, httpErr
+		}
+		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
 	}
 
 	category, err := security.GetOuUserFromName(user.Ou)
@@ -186,7 +186,7 @@ func (ctl *ControllerUser) HandleGetCategory(c *gin.Context) (*gggin.Response[st
 		return nil, gggin.NewHttpError(500, err.Error())
 	}
 
-	return gggin.NewResponse(category.String()), nil
+	return gggin.NewResponse(category), nil
 }
 
 type RequestModifyCategory struct {
@@ -194,13 +194,20 @@ type RequestModifyCategory struct {
 }
 
 // @Summary      更改账号类型
-// @Tags         user
+// @Description  修改指定用户的账号类型。需要 ADMIN 角色权限。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        uid   path      string  true  "用户ID"
+// @Param        uid   path      string  true  "用户ID，不能使用 'me'"
 // @Param        body  body      RequestModifyCategory  true  "修改账号类型请求\nsystem|member|external"
-// @Success      200  {object} object{data=string} "Success response with 'ok'"
-// @Router       /api/users/{id}/category [put]
+// @Success      200  {object} object{data=string} "成功修改账号类型，返回 'ok'"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      404  {object} object{data=string} "用户不存在"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/{uid}/category [put]
+// @Security     BearerAuth
 func (ctl *ControllerUser) HandleModifyCategory(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
 	authUid, _, guardErr := security.Guard(c, security.RoleAdmin)
 	if guardErr != nil {
@@ -208,8 +215,8 @@ func (ctl *ControllerUser) HandleModifyCategory(c *gin.Context) (*gggin.Response
 	}
 
 	uid := c.Param("uid")
-	if uid == "me" {
-		uid = authUid
+	if uid == "me" || uid == authUid {
+		return nil, gggin.NewHttpError(http.StatusForbidden, "WHAT ARE YOU DOING?")
 	}
 
 	req, err := gggin.ShouldBindJSON[RequestModifyCategory](c)
@@ -240,19 +247,39 @@ func (ctl *ControllerUser) HandleModifyCategory(c *gin.Context) (*gggin.Response
 }
 
 // @Summary      获取账号角色
-// @Tags         user
+// @Description  获取指定用户的账号角色（admin|default|restricted）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        uid   path      string  true  "用户ID"
-// @Success      200  {object} object{data=string} ""admin|default|restricted""
-// @Router       /api/users/{id}/role [get]
-func (ctl *ControllerUser) HandleGetRole(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
-	_, role, guardErr := security.Guard(c, security.RoleRestricted)
+// @Param        uid   path      string  true  "用户ID，使用 'me' 可获取当前用户角色"
+// @Success      200  {object} object{data=string} "成功返回账号角色: admin|default|restricted"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/{uid}/role [get]
+// @Security     BearerAuth
+func (ctl *ControllerUser) HandleGetRole(c *gin.Context) (*gggin.Response[security.Role], *gggin.HttpError) {
+	authUid, role, guardErr := security.Guard(c, security.RoleRestricted)
 	if guardErr != nil {
 		return nil, guardErr
 	}
 
-	return gggin.NewResponse(role.String()), nil
+	user, err := ctl.serviceManager.GetUserWithAuthority(authUid, c.Param("uid"), role)
+	if err != nil {
+		var httpErr *gggin.HttpError
+		if errors.As(err, &httpErr) {
+			return nil, httpErr
+		}
+		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+	}
+
+	resRole, err := ctl.serviceManager.GetRole(user)
+	if err != nil {
+		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+	}
+
+	return gggin.NewResponse(resRole), nil
 }
 
 type RequestModifyRole struct {
@@ -260,13 +287,20 @@ type RequestModifyRole struct {
 }
 
 // @Summary      更改账号角色
-// @Tags         user
+// @Description  修改指定用户的账号角色。需要 ADMIN 角色权限。非SYSTEM用户必须用学号作为用户名。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        uid   path      string  true  "用户ID"
+// @Param        uid   path      string  true "用户ID，不能使用 'me'"
 // @Param        body  body      RequestModifyRole  true  "修改账号角色请求\nadmin|default|restricted"
-// @Success      200  {object} object{data=string} "Success response with 'ok'"
-// @Router       /api/users/{id}/role [put]
+// @Success      200  {object} object{data=string} "成功修改账号角色，返回 'ok'"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      404  {object} object{data=string} "用户不存在"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/{uid}/role [put]
+// @Security     BearerAuth
 func (ctl *ControllerUser) HandleModifyRole(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
 	authUid, _, guardErr := security.Guard(c, security.RoleAdmin)
 	if guardErr != nil {
@@ -274,8 +308,8 @@ func (ctl *ControllerUser) HandleModifyRole(c *gin.Context) (*gggin.Response[str
 	}
 
 	uid := c.Param("uid")
-	if uid == "me" {
-		uid = authUid
+	if uid == "me" || uid == authUid {
+		return nil, gggin.NewHttpError(http.StatusForbidden, "WHAT ARE YOU DOING?")
 	}
 
 	req, err := gggin.ShouldBindJSON[RequestModifyRole](c)
@@ -305,12 +339,19 @@ type RequestRegister struct {
 }
 
 // @Summary      注册新用户
-// @Tags         user
+// @Description  创建新用户账号。需要 ADMIN 角色权限。
+// @Tags         users
 // @Accept       json
 // @Produce      json
 // @Param        body  body      RequestRegister  true  "注册用户请求"
-// @Success      200  {object} object{data=string} "Success response with 'ok'"
-// @Router       /api/users [post]
+// @Success      200  {object} object{data=string} "成功注册用户，返回 'ok'"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      409  {object} object{data=string} "用户已存在"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users [post]
+// @Security     BearerAuth
 func (ctl *ControllerUser) HandleRegister(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
 	_, _, guardErr := security.Guard(c, security.RoleAdmin)
 	if guardErr != nil {
@@ -335,12 +376,19 @@ func (ctl *ControllerUser) HandleRegister(c *gin.Context) (*gggin.Response[strin
 }
 
 // @Summary      删除用户
-// @Tags         user
+// @Description  删除指定用户账号。需要 ADMIN 角色权限。不允许删除当前登录用户。
+// @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        uid   path      string  true  "用户ID"
-// @Success      200  {object} object{data=string} "Success response with 'ok'"
-// @Router       /api/users/{id} [delete]
+// @Param        uid   path      string  true  "用户ID，不能使用 'me'"
+// @Success      200  {object} object{data=string} "成功删除用户，返回 'ok'"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      404  {object} object{data=string} "用户不存在"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/{uid} [delete]
+// @Security     BearerAuth
 func (ctl *ControllerUser) HandleUnregister(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
 	authUid, _, guardErr := security.Guard(c, security.RoleAdmin)
 	if guardErr != nil {

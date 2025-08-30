@@ -25,12 +25,16 @@ type CreateTokenRequest struct {
 }
 
 // @Summary      创建访问令牌
-// @Tags         token
+// @Description  通过用户名和密码验证用户身份并生成访问令牌
+// @Tags         tokens
 // @Accept       json
 // @Produce      json
 // @Param        body  body      CreateTokenRequest  true  "创建令牌请求"
-// @Success      200  {object} object{data=string} "返回访问令牌"
-// @Router       /api/tokens [post]
+// @Success      200   {object}  object{data=string} "返回访问令牌"
+// @Failure      400   {object}  object{data=string} "请求参数错误"
+// @Failure      401   {object}  object{data=string} "用户名或密码错误"
+// @Failure      500   {object}  object{data=string} "服务器内部错误"
+// @Router       /tokens [post]
 func (ctl *ControllerToken) HandleCreate(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
 	req, err := gggin.ShouldBindJSON[CreateTokenRequest](c)
 	if err != nil {

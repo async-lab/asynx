@@ -10,12 +10,16 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {},
+        "license": {
+            "name": "AGPL-v3.0",
+            "url": "https://raw.githubusercontent.com/async-lab/asynx/refs/heads/main/LICENSE"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/hello": {
+        "/hello": {
             "get": {
                 "consumes": [
                     "application/json"
@@ -42,8 +46,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/tokens": {
+        "/tokens": {
             "post": {
+                "description": "通过用户名和密码验证用户身份并生成访问令牌",
                 "consumes": [
                     "application/json"
                 ],
@@ -51,7 +56,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "token"
+                    "tokens"
                 ],
                 "summary": "创建访问令牌",
                 "parameters": [
@@ -76,12 +81,51 @@ const docTemplate = `{
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "用户名或密码错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }
         },
-        "/api/users": {
+        "/users": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取所有用户列表信息。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。",
                 "consumes": [
                     "application/json"
                 ],
@@ -89,12 +133,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "获取用户列表",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "成功返回用户列表",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -106,10 +150,49 @@ const docTemplate = `{
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建新用户账号。需要 ADMIN 角色权限。",
                 "consumes": [
                     "application/json"
                 ],
@@ -117,7 +200,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "注册新用户",
                 "parameters": [
@@ -133,7 +216,62 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success response with 'ok'",
+                        "description": "成功注册用户，返回 'ok'",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "用户已存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -146,8 +284,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/{id}": {
+        "/users/{uid}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据用户ID获取用户详细信息。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。",
                 "consumes": [
                     "application/json"
                 ],
@@ -155,21 +299,21 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "获取用户信息",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
-                        "name": "id",
+                        "description": "用户ID，使用 'me' 可获取当前用户信息",
+                        "name": "uid",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "成功返回用户信息",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -178,10 +322,71 @@ const docTemplate = `{
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除指定用户账号。需要 ADMIN 角色权限。不允许删除当前登录用户。",
                 "consumes": [
                     "application/json"
                 ],
@@ -189,13 +394,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "删除用户",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
+                        "description": "用户ID，不能使用 'me'",
                         "name": "uid",
                         "in": "path",
                         "required": true
@@ -203,7 +408,62 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success response with 'ok'",
+                        "description": "成功删除用户，返回 'ok'",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -216,8 +476,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/{id}/category": {
+        "/users/{uid}/category": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定用户的账号类型（system|member|external）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。",
                 "consumes": [
                     "application/json"
                 ],
@@ -225,13 +491,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "获取账号类型",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
+                        "description": "用户ID，使用 'me' 可获取当前用户类型",
                         "name": "uid",
                         "in": "path",
                         "required": true
@@ -239,7 +505,62 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "system|member|external",
+                        "description": "成功返回账号类型: system|member|external",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -252,6 +573,12 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "修改指定用户的账号类型。需要 ADMIN 角色权限。",
                 "consumes": [
                     "application/json"
                 ],
@@ -259,13 +586,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "更改账号类型",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
+                        "description": "用户ID，不能使用 'me'",
                         "name": "uid",
                         "in": "path",
                         "required": true
@@ -282,7 +609,62 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success response with 'ok'",
+                        "description": "成功修改账号类型，返回 'ok'",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -295,8 +677,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/{id}/password": {
+        "/users/{uid}/password": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "修改指定用户的密码。需要 RESTRICTED 或更高权限。ADMIN 用户可以修改任何用户密码，其他用户只能修改自己的密码。",
                 "consumes": [
                     "application/json"
                 ],
@@ -304,13 +692,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "修改密码",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
+                        "description": "用户ID，使用 'me' 可修改当前用户密码",
                         "name": "uid",
                         "in": "path",
                         "required": true
@@ -327,7 +715,62 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success response with 'ok'",
+                        "description": "成功修改密码，返回 'ok'",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或密码不符合要求",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -340,8 +783,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/{id}/role": {
+        "/users/{uid}/role": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定用户的账号角色（admin|default|restricted）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。",
                 "consumes": [
                     "application/json"
                 ],
@@ -349,13 +798,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "获取账号角色",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
+                        "description": "用户ID，使用 'me' 可获取当前用户角色",
                         "name": "uid",
                         "in": "path",
                         "required": true
@@ -363,7 +812,51 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "admin|default|restricted",
+                        "description": "成功返回账号角色: admin|default|restricted",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -376,6 +869,12 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "修改指定用户的账号角色。需要 ADMIN 角色权限。非SYSTEM用户必须用学号作为用户名。",
                 "consumes": [
                     "application/json"
                 ],
@@ -383,13 +882,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "users"
                 ],
                 "summary": "更改账号角色",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
+                        "description": "用户ID，不能使用 'me'",
                         "name": "uid",
                         "in": "path",
                         "required": true
@@ -406,7 +905,62 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success response with 'ok'",
+                        "description": "成功修改账号角色，返回 'ok'",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -517,17 +1071,25 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "输入 Bearer Token，格式为 \"Bearer \u003ctoken\u003e\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
-	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	BasePath:         "/api",
+	Schemes:          []string{"http", "https"},
+	Title:            "Asynx API 文档",
+	Description:      "Asynx API 接口文档",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

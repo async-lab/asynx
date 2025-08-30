@@ -18,7 +18,7 @@ func NewControllerHello(g *gin.RouterGroup) *ControllerHello {
 // @Accept       json
 // @Produce      json
 // @Success      200  {object} object{data=string} "Hello, AsyncLab"
-// @Router       /api/hello [get]
+// @Router       /hello [get]
 func (ctl *ControllerHello) HandleHello(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
 	return gggin.NewResponse("Hello, AsyncLab!"), nil
 }

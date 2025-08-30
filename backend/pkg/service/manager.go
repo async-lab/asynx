@@ -28,20 +28,20 @@ func NewServiceManager(serviceUser *ServiceUser, serviceGroup *ServiceGroup, ema
 func (s *ServiceManager) Authenticate(username string, password string) (string, error) {
 	ok, err := s.serviceUser.Authenticate(username, password)
 	if err != nil {
-		return "", gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return "", err
 	}
 
 	if !ok {
-		return "", gggin.NewHttpError(http.StatusUnauthorized, "Invalid credentials")
+		return "", gggin.NewHttpError(http.StatusUnauthorized, "无效的凭证")
 	}
 	role, err := s.GetRoleByUid(username)
 	if err != nil {
-		return "", gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return "", err
 	}
 
 	token, err := security.GeneratePaseto(username, role)
 	if err != nil {
-		return "", gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return "", err
 	}
 	return token, nil
 }
@@ -50,6 +50,12 @@ func (s *ServiceManager) Register(username, surName, givenName, mail, category, 
 	ou, err := security.GetOuUserFromName(category)
 	if err != nil {
 		return gggin.NewHttpError(http.StatusBadRequest, err.Error())
+	}
+
+	if ou != security.OuUserSystem {
+		if err := security.ValidateMemberUsernameLegality(username); err != nil {
+			return gggin.NewHttpError(http.StatusBadRequest, err.Error())
+		}
 	}
 
 	role, err := security.GetRoleFromName(roleName)
@@ -64,20 +70,20 @@ func (s *ServiceManager) Register(username, surName, givenName, mail, category, 
 
 	ok, err := s.CheckUserExists(username)
 	if err != nil {
-		return gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 	if ok {
-		return gggin.NewHttpError(http.StatusBadRequest, "User already exists")
+		return gggin.NewHttpError(http.StatusBadRequest, "用户已存在")
 	}
 
 	uidNumber, err := s.GenerateNextUidNumber()
 	if err != nil {
-		return gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 
 	password, err := ggkit.GenerateReadableKey(32, 0)
 	if err != nil {
-		return gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 
 	user := &entity.User{
@@ -141,10 +147,10 @@ func (s *ServiceManager) GetRoleByUid(uid string) (security.Role, error) {
 func (s *ServiceManager) FindUserByUid(uid string) (*entity.User, error) {
 	user, err := s.serviceUser.FindByUid(uid)
 	if err != nil {
-		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return nil, err
 	}
 	if user == nil {
-		return nil, gggin.NewHttpError(http.StatusNotFound, "user not found")
+		return nil, gggin.NewHttpError(http.StatusNotFound, "用户未找到")
 	}
 	return user, nil
 }
@@ -152,10 +158,10 @@ func (s *ServiceManager) FindUserByUid(uid string) (*entity.User, error) {
 func (s *ServiceManager) FindUserByOuAndUid(ou security.OuUser, uid string) (*entity.User, error) {
 	user, err := s.serviceUser.FindByOuAndUid(ou, uid)
 	if err != nil {
-		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return nil, err
 	}
 	if user == nil {
-		return nil, gggin.NewHttpError(http.StatusNotFound, "user not found")
+		return nil, gggin.NewHttpError(http.StatusNotFound, "用户未找到")
 	}
 	return user, nil
 }
@@ -176,13 +182,17 @@ func (s *ServiceManager) ModifyCategory(user *entity.User, ou security.OuUser) e
 	return s.serviceUser.ModifyCategory(user, ou)
 }
 
+func (s *ServiceManager) GetRole(user *entity.User) (security.Role, error) {
+	return s.serviceGroup.GetRole(user)
+}
+
 func (s *ServiceManager) GrantRoleByUidAndRoleName(uid string, roleName string) error {
 	user, err := s.FindUserByUid(uid)
 	if err != nil {
-		return gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 	if user == nil {
-		return gggin.NewHttpError(http.StatusNotFound, "User not found")
+		return gggin.NewHttpError(http.StatusNotFound, "用户未找到")
 	}
 
 	role, err := security.GetRoleFromName(roleName)
@@ -192,7 +202,7 @@ func (s *ServiceManager) GrantRoleByUidAndRoleName(uid string, roleName string) 
 
 	err = s.serviceGroup.GrantRole(user, role)
 	if err != nil {
-		return gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 
 	return nil
@@ -225,4 +235,30 @@ func (s *ServiceManager) CheckUserExists(username string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (s *ServiceManager) GetUserWithAuthority(authUid string, uid string, role security.Role) (*entity.User, error) {
+	if uid == "me" {
+		uid = authUid
+	}
+
+	var (
+		user *entity.User
+		err  error
+	)
+
+	switch role {
+	case security.RoleAdmin:
+		user, err = s.FindUserByUid(uid)
+	case security.RoleDefault:
+		user, err = s.FindUserByOuAndUid(security.OuUserMember, uid)
+	default:
+		if authUid != uid {
+			return nil, nil
+		}
+
+		user, err = s.FindUserByUid(uid)
+	}
+
+	return user, err
 }
