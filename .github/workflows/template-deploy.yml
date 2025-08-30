@@ -36,3 +36,24 @@ jobs:
         run: |
           export COMPOSE_PROJECT_NAME=asynx
           docker compose up -d --pull always --remove-orphans
+
+      - name: Health Check
+        run: |
+          echo "🔍 正在检查服务健康状态..."
+
+          sleep 5
+
+          # NETWORK=$(docker network ls --filter name=asynx_default --format "{{.Name}}")
+
+          RESPONSE=$(docker run --rm --network asynx_default curlimages/curl -f -v -m 10 http://asynx:8888/api/hello 2>&1)
+          CURL_EXIT_CODE=$?
+
+          if [ $CURL_EXIT_CODE -eq 0 ]; then
+            echo "✅ 健康检查通过"
+          else
+            echo "❌ 健康检查失败，详细错误如下："
+            echo "========================================"
+            echo "$RESPONSE"
+            echo "========================================"
+            exit 1
+          fi
