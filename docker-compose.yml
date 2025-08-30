@@ -1,6 +1,6 @@
 services:
   asynx:
-    image: ghcr.io/async-lab/asynx:latest
+    image: ghcr.io/async-lab/asynx/asynx:latest
     restart: unless-stopped
     ports:
       - "80:8888"
