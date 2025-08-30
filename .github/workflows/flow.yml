@@ -12,7 +12,9 @@ concurrency:
 jobs:
   publish:
     uses: ./.github/workflows/template-publish.yml
+    secrets: inherit
 
   deploy:
     needs: [publish]
     uses: ./.github/workflows/template-deploy.yml
+    secrets: inherit

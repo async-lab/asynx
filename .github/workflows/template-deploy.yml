@@ -19,6 +19,20 @@ jobs:
           password: ${{ github.token }}
 
       - name: Deploy
+        env:
+          LDAP_ADDR: ${{ secrets.LDAP_ADDR }}
+          LDAP_BIND_DN: ${{ secrets.LDAP_BIND_DN }}
+          LDAP_BIND_PASS: ${{ secrets.LDAP_BIND_PASS }}
+          LDAP_BASE_DN: ${{ secrets.LDAP_BASE_DN }}
+          LDAP_USER_BASE_DN: ${{ secrets.LDAP_USER_BASE_DN }}
+          LDAP_GROUP_BASE_DN: ${{ secrets.LDAP_GROUP_BASE_DN }}
+          PASETO_SECRET: ${{ secrets.PASETO_SECRET }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          SMTP_REPLY_TO: ${{ secrets.SMTP_REPLY_TO }}
         run: |
           export COMPOSE_PROJECT_NAME=asynx
           docker compose up -d --pull always --remove-orphans
