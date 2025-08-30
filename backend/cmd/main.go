@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"embed"
-	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -34,13 +33,8 @@ func initRouter(r *gin.Engine, embedFS embed.FS) error {
 			c.Status(404)
 			return
 		}
-		indexFile, err := clientDistFS.Open("index.html")
-		if err != nil {
-			c.Status(500)
-			return
-		}
-		defer indexFile.Close()
-		io.Copy(c.Writer, indexFile)
+
+		c.FileFromFS("index.html", http.FS(clientDistFS))
 	})
 
 	ldapCfg, err := env.ParseAs[config.ConfigLDAP]()
