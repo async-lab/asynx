@@ -2,8 +2,8 @@ name: flow
 
 on:
   push:
-    # branches:
-    #   - main
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.ref }}

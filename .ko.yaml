@@ -2,8 +2,8 @@ defaultBaseImage: cgr.dev/chainguard/static
 defaultLdflags:
   - -s -w
 builds:
-  - id: custodian
-    dir: ./custodian
+  - id: asynx
+    dir: .
     main: .
     flags: []
     ldflags:

@@ -1,0 +1,332 @@
+definitions:
+  controller.CreateTokenRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  controller.RequestChangePassword:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  controller.RequestModifyCategory:
+    properties:
+      category:
+        type: string
+    required:
+    - category
+    type: object
+  controller.RequestModifyRole:
+    properties:
+      role:
+        type: string
+    required:
+    - role
+    type: object
+  controller.RequestRegister:
+    properties:
+      category:
+        type: string
+      givenName:
+        type: string
+      mail:
+        type: string
+      role:
+        type: string
+      surName:
+        type: string
+      username:
+        type: string
+    required:
+    - category
+    - givenName
+    - mail
+    - role
+    - surName
+    - username
+    type: object
+  entity.User:
+    properties:
+      givenName:
+        type: string
+      mail:
+        type: string
+      surName:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/hello:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hello, AsyncLab
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 打招呼
+      tags:
+      - index
+  /api/tokens:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建令牌请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 返回访问令牌
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 创建访问令牌
+      tags:
+      - token
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  $ref: '#/definitions/entity.User'
+                type: array
+            type: object
+      summary: 获取用户列表
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 注册用户请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RequestRegister'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with 'ok'
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 注册新用户
+      tags:
+      - user
+  /api/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with 'ok'
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 删除用户
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/entity.User'
+            type: object
+      summary: 获取用户信息
+      tags:
+      - user
+  /api/users/{id}/category:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: system|member|external
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 获取账号类型
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: path
+        name: uid
+        required: true
+        type: string
+      - description: |-
+          修改账号类型请求
+          system|member|external
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RequestModifyCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with 'ok'
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 更改账号类型
+      tags:
+      - user
+  /api/users/{id}/password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: path
+        name: uid
+        required: true
+        type: string
+      - description: 修改密码请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RequestChangePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with 'ok'
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 修改密码
+      tags:
+      - user
+  /api/users/{id}/role:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: admin|default|restricted
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 获取账号角色
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: path
+        name: uid
+        required: true
+        type: string
+      - description: |-
+          修改账号角色请求
+          admin|default|restricted
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RequestModifyRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with 'ok'
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      summary: 更改账号角色
+      tags:
+      - user
+swagger: "2.0"

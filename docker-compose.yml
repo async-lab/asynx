@@ -1,31 +1,21 @@
-configs:
-  caddyfile:
-    content: |
-      {
-        auto_https off
-      }
-
-      :80 {
-        handle_path /api/v1* {
-          handle_path /custodian* {
-            reverse_proxy custodian:8888
-          }
-        }
-
-        handle * {
-          respond "404 Not Found" 404
-        }
-      }
-
 services:
-  caddy:
-    image: caddy:latest
+  asynx:
+    image: ghcr.io/async-lab/asynx:latest
     restart: unless-stopped
     ports:
-      - "80:80"
-    configs:
-      - source: caddyfile
-        target: /etc/caddy/Caddyfile
-  custodian:
-    image: ghcr.io/async-lab/asynx/custodian:latest
-    restart: unless-stopped
+      - "80:8888"
+    environment:
+      TZ: Asia/Shanghai
+      LDAP_ADDR: ${LDAP_ADDR}
+      LDAP_BIND_DN: ${LDAP_BIND_DN}
+      LDAP_BIND_PASS: ${LDAP_BIND_PASS}
+      LDAP_BASE_DN: ${LDAP_BASE_DN}
+      LDAP_USER_BASE_DN: ${LDAP_USER_BASE_DN}
+      LDAP_GROUP_BASE_DN: ${LDAP_GROUP_BASE_DN}
+      PASETO_SECRET: ${PASETO_SECRET}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM=: ${SMTP_FROM}
+      SMTP_REPLY_TO: ${SMTP_REPLY_TO}
