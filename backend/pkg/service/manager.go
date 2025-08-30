@@ -13,6 +13,7 @@ import (
 	"github.com/dsx137/gg-gin/pkg/gggin"
 	"github.com/dsx137/gg-kit/pkg/ggkit"
 	"github.com/sirupsen/logrus"
+
 )
 
 type ServiceManager struct {
@@ -143,7 +144,9 @@ func (s *ServiceManager) Unregister(user *entity.User) error {
 func (s *ServiceManager) GetRoleByUid(uid string) (security.Role, error) {
 	return s.serviceGroup.GetRoleByUid(uid)
 }
-
+func (s *ServiceManager) GetRole(user *entity.User) (security.Role, error) {
+	return s.serviceGroup.GetRole(user)
+}
 func (s *ServiceManager) FindUserByUid(uid string) (*entity.User, error) {
 	user, err := s.serviceUser.FindByUid(uid)
 	if err != nil {
@@ -180,10 +183,6 @@ func (s *ServiceManager) ModifyPassword(user *entity.User, newPassword string) e
 
 func (s *ServiceManager) ModifyCategory(user *entity.User, ou security.OuUser) error {
 	return s.serviceUser.ModifyCategory(user, ou)
-}
-
-func (s *ServiceManager) GetRole(user *entity.User) (security.Role, error) {
-	return s.serviceGroup.GetRole(user)
 }
 
 func (s *ServiceManager) GrantRoleByUidAndRoleName(uid string, roleName string) error {
