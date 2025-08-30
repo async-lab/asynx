@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"log"
 
 	"asynclab.club/asynx/backend/cmd"
 	"github.com/joho/godotenv"
@@ -12,9 +11,6 @@ import (
 var embedFS embed.FS
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load()
 	cmd.Main(embedFS)
 }
