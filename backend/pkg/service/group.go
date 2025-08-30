@@ -7,6 +7,7 @@ import (
 	"asynclab.club/asynx/backend/pkg/repository"
 	"asynclab.club/asynx/backend/pkg/security"
 	"github.com/sirupsen/logrus"
+
 )
 
 type ServiceGroup struct {
@@ -94,9 +95,9 @@ func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 	if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil); err != nil {
 		return err
 	}
-	if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(newGroup), nil, nil, attr); err != nil {
+	if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(newGroup), attr, nil, nil); err != nil {
 		// 回滚
-		if err = s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, nil, attr); err != nil {
+		if err = s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), attr, nil, nil); err != nil {
 			logrus.Warningf("Failed to rollback group modification when grant role: %v", err)
 		}
 		return err

@@ -9,6 +9,7 @@ import (
 	"asynclab.club/asynx/backend/pkg/service"
 	"github.com/dsx137/gg-gin/pkg/gggin"
 	"github.com/gin-gonic/gin"
+
 )
 
 type ControllerUser struct {
@@ -124,7 +125,7 @@ func (ctl *ControllerUser) HandleChangePassword(c *gin.Context) (*gggin.Response
 		uid = authUid
 	}
 	if role != security.RoleAdmin && authUid != uid {
-		return nil, gggin.NewHttpError(http.StatusForbidden, "Insufficient permissions")
+		return nil, gggin.NewHttpError(http.StatusForbidden, "权限不足")
 	}
 
 	req, err := gggin.ShouldBindJSON[RequestChangePassword](c)
