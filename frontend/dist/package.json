@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/js-cookie": "^3.0.6",
     "axios": "^1.11.0",
     "element-plus": "^2.11.1",
+    "js-cookie": "^3.0.5",
     "vue": "^3.5.18"
   },
   "devDependencies": {
