@@ -21,18 +21,32 @@ func (s *ServiceUser) Authenticate(uid, password string) (bool, error) {
 }
 
 func (s *ServiceUser) FindByUid(uid string) (*entity.User, error) {
-	return s.repositoryUser.FindByUid(uid)
+	user, err := s.repositoryUser.FindByUid(uid)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrUserNotFound
+	}
+	return user, nil
 }
 
 func (s *ServiceUser) FindByOuAndUid(ou security.OuUser, uid string) (*entity.User, error) {
-	return s.repositoryUser.FindByOuAndUid(ou.String(), uid)
+	user, err := s.repositoryUser.FindByOuAndUid(ou.String(), uid)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrUserNotFound
+	}
+	return user, nil
 }
 
 func (s *ServiceUser) FindAll() ([]*entity.User, error) {
 	return s.repositoryUser.FindAll()
 }
 
-func (s *ServiceUser) FindAllByOu(ou security.OuGroup) ([]*entity.User, error) {
+func (s *ServiceUser) FindAllByOu(ou security.OuUser) ([]*entity.User, error) {
 	return s.repositoryUser.FindAllByOu(ou.String())
 }
 
@@ -48,7 +62,7 @@ func (s *ServiceUser) ModifyPassword(user *entity.User, newPassword string) erro
 	return s.repositoryUser.ModifyPassword(user, newPassword)
 }
 
-func (s *ServiceUser) ModifyCategory(user *entity.User, ou security.OuUser) error {
+func (s *ServiceUser) ModifyOu(user *entity.User, ou security.OuUser) error {
 	return s.repositoryUser.ModifyDn(user, fmt.Sprintf("cn=%s", user.Cn), fmt.Sprintf("ou=%s,%s", ou.String(), s.repositoryUser.GetUserBaseDn()))
 }
 

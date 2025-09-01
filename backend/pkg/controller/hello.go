@@ -9,7 +9,7 @@ type ControllerHello struct{}
 
 func NewControllerHello(g *gin.RouterGroup) *ControllerHello {
 	ctl := &ControllerHello{}
-	g.GET("", gggin.HandleController(ctl.HandleHello))
+	g.GET("", gggin.ToGinHandler(ctl.HandleHello))
 	return ctl
 }
 

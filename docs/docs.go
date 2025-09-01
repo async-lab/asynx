@@ -1087,7 +1087,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
 	BasePath:         "/api",
-	Schemes:          []string{"http", "https"},
+	Schemes:          []string{},
 	Title:            "Asynx API 文档",
 	Description:      "Asynx API 接口文档",
 	InfoInstanceName: "swagger",

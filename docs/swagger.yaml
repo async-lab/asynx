@@ -682,9 +682,6 @@ paths:
       summary: 更改账号角色
       tags:
       - users
-schemes:
-- http
-- https
 securityDefinitions:
   BearerAuth:
     description: 输入 Bearer Token，格式为 "Bearer <token>"
