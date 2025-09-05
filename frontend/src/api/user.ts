@@ -48,6 +48,12 @@ export function getUserInfo(uid: string) {
         method: 'GET'
     })
 }
+export function getMeInfo() {
+    return request({
+        url: '/users/me',
+        method: 'GET'
+    })
+}
 
 /**
  * 删除用户
@@ -73,6 +79,12 @@ export function getUserCategory(uid: string) {
     })
 }
 
+export function getMyCategory() {
+    return request({
+        url: '/users/me/category',
+        method: 'GET'
+    })
+}
 /**
  * 更改账号类型
  * @param {string} uid 用户ID，不能使用 'me'
@@ -102,6 +114,13 @@ export function changePassword(uid: string, reqData: ChangePasswordRequest) {
         data: reqData
     })
 }
+export function changeMyPassword(reqData: ChangePasswordRequest) {
+    return request({
+        url: '/users/me/password',
+        method: 'PUT',
+        data: reqData
+    })
+}
 
 /**
  * 获取账号角色
@@ -111,6 +130,12 @@ export function changePassword(uid: string, reqData: ChangePasswordRequest) {
 export function getUserRole(uid: string) {
     return request({
         url: `/users/${uid}/role`,
+        method: 'GET'
+    })
+}
+export function getMyRole() {
+    return request({
+        url: '/users/me/role',
         method: 'GET'
     })
 }
