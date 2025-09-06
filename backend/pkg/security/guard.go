@@ -41,7 +41,7 @@ func GuardMiddleware(role Role) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("guard", GuardResult{Uid: uid, Role: role})
+		c.Set("guard", &GuardResult{Uid: uid, Role: role})
 		c.Next()
 	}
 }

@@ -14,17 +14,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type UserProfile struct {
+	Username  string          `json:"username"`
+	SurName   string          `json:"surName"`
+	GivenName string          `json:"givenName"`
+	Mail      string          `json:"mail"`
+	Role      security.Role   `json:"role"`
+	Category  security.OuUser `json:"category"`
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+
 type ServiceManager struct {
 	serviceUser  *ServiceUser
 	serviceGroup *ServiceGroup
 	emailClient  *client.EmailClient
-}
-
-// UserWithRoleAndCategory 包含用户信息及其角色和类别
-type UserWithRoleAndCategory struct {
-	User     *entity.User
-	Role     security.Role
-	Category security.OuUser
 }
 
 func NewServiceManager(serviceUser *ServiceUser, serviceGroup *ServiceGroup, emailClient *client.EmailClient) *ServiceManager {
@@ -40,7 +44,7 @@ func (s *ServiceManager) Authenticate(username, password string) (string, error)
 		return "", ErrInvalidCreds
 	}
 
-	role, err := s.GetRoleByUid(username)
+	role, err := s.serviceGroup.GetRoleByUid(username)
 	if err != nil {
 		return "", err
 	}
@@ -73,12 +77,9 @@ func (s *ServiceManager) Register(username, surName, givenName, mail, category, 
 		return ErrInvalidEmail
 	}
 
-	ok, err := s.CheckUserExists(username)
-	if err != nil {
+	_, err = s.serviceUser.FindByUid(username)
+	if err != nil && err != ErrUserNotFound {
 		return err
-	}
-	if ok {
-		return ErrUserExists
 	}
 
 	uidNumber, err := s.GenerateNextUidNumber()
@@ -154,15 +155,8 @@ func (s *ServiceManager) Unregister(uid string) error {
 	return s.unregister(user)
 }
 
-func (s *ServiceManager) GetRoleByUid(uid string) (security.Role, error) {
-	return s.serviceGroup.GetRoleByUid(uid)
-}
 func (s *ServiceManager) GetRole(user *entity.User) (security.Role, error) {
 	return s.serviceGroup.GetRole(user)
-}
-
-func (s *ServiceManager) GetAllGroups() ([]*entity.Group, error) {
-	return s.serviceGroup.FindAll()
 }
 
 func (s *ServiceManager) GrantRoleByUidAndRoleName(uid string, roleName string) error {
@@ -199,25 +193,9 @@ func (s *ServiceManager) GenerateNextUidNumber() (string, error) {
 	return strconv.Itoa(uidNumber), nil
 }
 
-func (s *ServiceManager) CheckUserExists(username string) (bool, error) {
-	user, err := s.serviceUser.FindByUid(username)
-	if err == ErrUserNotFound {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-
-	if user != nil {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (s *ServiceManager) GetUserWithAuthority(authUid string, uid string, role security.Role) (*entity.User, error) {
+func (s *ServiceManager) GetUserWithGuard(guard *security.GuardResult, uid string) (*entity.User, error) {
 	if uid == "me" {
-		uid = authUid
+		uid = guard.Uid
 	}
 
 	var (
@@ -225,13 +203,13 @@ func (s *ServiceManager) GetUserWithAuthority(authUid string, uid string, role s
 		err  error
 	)
 
-	switch role {
+	switch guard.Role {
 	case security.RoleAdmin:
 		user, err = s.serviceUser.FindByUid(uid)
 	case security.RoleDefault:
 		user, err = s.serviceUser.FindByOuAndUid(security.OuUserMember, uid)
 	default:
-		if authUid != uid {
+		if guard.Uid != uid {
 			return nil, nil
 		}
 
@@ -241,16 +219,46 @@ func (s *ServiceManager) GetUserWithAuthority(authUid string, uid string, role s
 	return user, err
 }
 
-func (s *ServiceManager) List(uid string, role security.Role) ([]*entity.User, error) {
-	switch role {
+func (s *ServiceManager) GetProfile(guard *security.GuardResult, uid string) (*UserProfile, error) {
+	user, err := s.GetUserWithGuard(guard, uid)
+	if err != nil {
+		return nil, err
+	}
+	category, err := security.GetOuUserFromName(user.Ou)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := s.GetRole(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserProfile{
+		Category:  category,
+		GivenName: user.GivenName,
+		Mail:      user.Mail,
+		Role:      role,
+		SurName:   user.Sn,
+		Username:  user.Uid,
+	}, nil
+}
+
+func (s *ServiceManager) ListProfiles(guard *security.GuardResult) ([]*UserProfile, error) {
+	var (
+		users    []*entity.User
+		profiles []*UserProfile
+		err      error
+	)
+	switch guard.Role {
 	case security.RoleAdmin:
-		users, err := s.serviceUser.FindAll()
+		users, err = s.serviceUser.FindAll()
 		if err != nil {
 			return nil, err
 		}
-		return users, nil
+		break
 	default:
-		user, err := s.serviceUser.FindByUid(uid)
+		user, err := s.serviceUser.FindByUid(guard.Uid)
 		if err != nil {
 			return nil, err
 		}
@@ -260,12 +268,50 @@ func (s *ServiceManager) List(uid string, role security.Role) ([]*entity.User, e
 			return nil, err
 		}
 
-		users, err := s.serviceUser.FindAllByOu(ou)
+		users, err = s.serviceUser.FindAllByOu(ou)
 		if err != nil {
 			return nil, err
 		}
-		return users, nil
+		break
 	}
+
+	for _, user := range users {
+		category, err := security.GetOuUserFromName(user.Ou)
+		if err != nil {
+			return nil, err
+		}
+		profiles = append(profiles, &UserProfile{
+			Username:  user.Uid,
+			GivenName: user.GivenName,
+			SurName:   user.Sn,
+			Mail:      user.Mail,
+			Role:      security.RoleAnonymous,
+			Category:  category,
+		})
+	}
+
+	roleGroups, err := s.serviceGroup.FindAllByOu(security.OuGroupSupplementary)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, profile := range profiles {
+		userGroups := make([]*entity.Group, 0)
+		for _, group := range roleGroups {
+			if slices.Contains(group.MemberUid, profile.Username) {
+				userGroups = append(userGroups, group)
+			}
+		}
+
+		role, err := security.GetRoleFromLdapGroups(userGroups)
+		if err != nil {
+			return nil, fmt.Errorf("error getting role for user %s: %w", profile.Username, err)
+		}
+
+		profile.Role = role
+	}
+
+	return profiles, nil
 }
 
 func (s *ServiceManager) ChangePassword(uid string, password string) error {
@@ -303,75 +349,4 @@ func (s *ServiceManager) ModifyCategory(uid string, category string) error {
 	}
 
 	return nil
-}
-
-func (s *ServiceManager) ListWithRoleAndCategory(uid string, role security.Role) ([]*UserWithRoleAndCategory, error) {
-	users, err := s.List(uid, role)
-	if err != nil {
-		return nil, err
-	}
-
-	allGroups, err := s.serviceGroup.FindAll()
-	if err != nil {
-		return nil, err
-	}
-
-	// 过滤权限组（ou 为 supplementary）
-	roleGroups := make([]*entity.Group, 0)
-	for _, group := range allGroups {
-		if group.Ou == security.OuGroupSupplementary.String() {
-			roleGroups = append(roleGroups, group)
-		}
-	}
-
-	result := make([]*UserWithRoleAndCategory, 0, len(users))
-	for _, user := range users {
-		userGroups := make([]*entity.Group, 0)
-		for _, group := range roleGroups {
-			if slices.Contains(group.MemberUid, user.Uid) {
-				userGroups = append(userGroups, group)
-			}
-		}
-
-		userRole, err := security.GetRoleFromLdapGroups(userGroups)
-		if err != nil {
-			userRole = security.RoleRestricted
-		}
-
-		category, err := security.GetOuUserFromName(user.Ou)
-		if err != nil {
-			category = security.OuUserUnknown
-		}
-
-		result = append(result, &UserWithRoleAndCategory{
-			User:     user,
-			Role:     userRole,
-			Category: category,
-		})
-	}
-
-	return result, nil
-}
-
-func (s *ServiceManager) GetUserWithRoleAndCategory(authUid string, uid string, role security.Role) (*UserWithRoleAndCategory, error) {
-	user, err := s.GetUserWithAuthority(authUid, uid, role)
-	if err != nil {
-		return nil, err
-	}
-
-	userRole, err := s.GetRole(user)
-	if err != nil {
-		return nil, err
-	}
-
-	category, err := security.GetOuUserFromName(user.Ou)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UserWithRoleAndCategory{
-		User:     user,
-		Role:     userRole,
-		Category: category,
-	}, nil
 }

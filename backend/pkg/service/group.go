@@ -7,7 +7,6 @@ import (
 	"asynclab.club/asynx/backend/pkg/repository"
 	"asynclab.club/asynx/backend/pkg/security"
 	"github.com/sirupsen/logrus"
-
 )
 
 type ServiceGroup struct {
@@ -28,6 +27,10 @@ func (s *ServiceGroup) FindAll() ([]*entity.Group, error) {
 	return s.repositoryGroup.FindAll()
 }
 
+func (s *ServiceGroup) FindAllByOu(ou security.OuGroup) ([]*entity.Group, error) {
+	return s.repositoryGroup.FindAllByOu(ou.String())
+}
+
 func (s *ServiceGroup) FindAllByOuAndMemberUid(ou security.OuGroup, uid string) ([]*entity.Group, error) {
 	return s.repositoryGroup.FindAllByOuAndMemberUid(ou.String(), uid)
 }
@@ -41,7 +44,11 @@ func (s *ServiceGroup) GetRoleByUid(uid string) (security.Role, error) {
 	if len(groups) == 0 {
 		return security.RoleAnonymous, nil
 	}
-	return security.GetRoleFromLdapGroups(groups)
+	role, err := security.GetRoleFromLdapGroups(groups)
+	if err != nil {
+		return security.RoleAnonymous, fmt.Errorf("error getting role for user %s: %w", uid, err)
+	}
+	return role, nil
 }
 
 func (s *ServiceGroup) GetRole(user *entity.User) (security.Role, error) {

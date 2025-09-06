@@ -53,12 +53,40 @@ definitions:
     - surName
     - username
     type: object
-  entity.User:
+  security.OuUser:
+    enum:
+    - system
+    - member
+    - external
+    - unknown
+    type: string
+    x-enum-varnames:
+    - OuUserSystem
+    - OuUserMember
+    - OuUserExternal
+    - OuUserUnknown
+  security.Role:
+    enum:
+    - admin
+    - default
+    - restricted
+    - anonymous
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleDefault
+    - RoleRestricted
+    - RoleAnonymous
+  service.UserProfile:
     properties:
+      category:
+        $ref: '#/definitions/security.OuUser'
       givenName:
         type: string
       mail:
         type: string
+      role:
+        $ref: '#/definitions/security.Role'
       surName:
         type: string
       username:
@@ -140,7 +168,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取所有用户列表信息。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。
+      description: 获取所有用户列表信息（包含角色和类别）。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。
       produces:
       - application/json
       responses:
@@ -150,7 +178,7 @@ paths:
             properties:
               data:
                 items:
-                  $ref: '#/definitions/entity.User'
+                  $ref: '#/definitions/service.UserProfile'
                 type: array
             type: object
         "401":
@@ -304,8 +332,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: 根据用户ID获取用户详细信息。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED
-        用户只能查看自己的信息。
+      description: 根据用户ID获取用户详细信息（包含角色和类别）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT
+        用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
       parameters:
       - description: 用户ID，使用 'me' 可获取当前用户信息
         in: path
@@ -320,7 +348,7 @@ paths:
           schema:
             properties:
               data:
-                $ref: '#/definitions/entity.User'
+                $ref: '#/definitions/service.UserProfile'
             type: object
         "400":
           description: 请求参数错误
@@ -366,6 +394,7 @@ paths:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 获取指定用户的账号类型（system|member|external）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT
         用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
       parameters:
@@ -563,6 +592,7 @@ paths:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 获取指定用户的账号角色（admin|default|restricted）。需要 RESTRICTED 或更高权限。ADMIN
         用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
       parameters:
