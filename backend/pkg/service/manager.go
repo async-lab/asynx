@@ -78,7 +78,7 @@ func (s *ServiceManager) Register(username, surName, givenName, mail, category, 
 	}
 
 	_, err = s.serviceUser.FindByUid(username)
-	if err != nil && err != ErrUserNotFound {
+	if err != nil && err != ErrNotFound {
 		return err
 	}
 

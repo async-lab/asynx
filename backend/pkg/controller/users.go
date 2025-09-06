@@ -20,10 +20,12 @@ func NewControllerUser(g *gin.RouterGroup, serviceManager *service.ServiceManage
 	g.GET("/:uid", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleGetProfile))
 	g.DELETE("/:uid", security.GuardMiddleware(security.RoleAdmin), gggin.ToGinHandler(ctl.HandleUnregister))
 	g.PUT("/:uid/password", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleChangePassword))
-	g.GET("/:uid/category", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleGetCategory))
 	g.PUT("/:uid/category", security.GuardMiddleware(security.RoleAdmin), gggin.ToGinHandler(ctl.HandleModifyCategory))
-	g.GET("/:uid/role", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleGetRole))
 	g.PUT("/:uid/role", security.GuardMiddleware(security.RoleAdmin), gggin.ToGinHandler(ctl.HandleModifyRole))
+
+	// Deprecated
+	g.GET("/:uid/category", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleGetCategory))
+	g.GET("/:uid/role", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleGetRole))
 	return ctl
 }
 

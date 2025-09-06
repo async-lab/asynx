@@ -26,7 +26,7 @@ func (s *ServiceUser) FindByUid(uid string) (*entity.User, error) {
 		return nil, err
 	}
 	if user == nil {
-		return nil, ErrUserNotFound
+		return nil, ErrNotFound
 	}
 	return user, nil
 }
@@ -37,7 +37,7 @@ func (s *ServiceUser) FindByOuAndUid(ou security.OuUser, uid string) (*entity.Us
 		return nil, err
 	}
 	if user == nil {
-		return nil, ErrUserNotFound
+		return nil, ErrNotFound
 	}
 	return user, nil
 }

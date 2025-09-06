@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	ErrUserNotFound    = errors.New("user not found")
-	ErrUserExists      = errors.New("user already exists")
+	ErrNotFound        = errors.New("not found")
+	ErrExists          = errors.New("already exists")
 	ErrInvalidEmail    = errors.New("invalid email format")
 	ErrInvalidRole     = errors.New("invalid role")
 	ErrInvalidOu       = errors.New("invalid organizational unit")
@@ -33,10 +33,10 @@ func (e *ServiceError) Error() string { return e.Message }
 
 func MapErrorToHttp(err error) *gggin.HttpError {
 	switch {
-	case errors.Is(err, ErrUserNotFound):
-		return gggin.NewHttpError(http.StatusNotFound, fmt.Sprintf("用户不存在: %s", err.Error()))
-	case errors.Is(err, ErrUserExists):
-		return gggin.NewHttpError(http.StatusConflict, fmt.Sprintf("用户已存在: %s", err.Error()))
+	case errors.Is(err, ErrNotFound):
+		return gggin.NewHttpError(http.StatusNotFound, fmt.Sprintf("对象不存在: %s", err.Error()))
+	case errors.Is(err, ErrExists):
+		return gggin.NewHttpError(http.StatusConflict, fmt.Sprintf("对象已存在: %s", err.Error()))
 	case errors.Is(err, ErrInvalidEmail):
 		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("邮箱格式不合法: %s", err.Error()))
 	case errors.Is(err, ErrInvalidOu):
