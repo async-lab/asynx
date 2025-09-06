@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 
 	"asynclab.club/asynx/backend/pkg/client"
@@ -17,6 +18,13 @@ type ServiceManager struct {
 	serviceUser  *ServiceUser
 	serviceGroup *ServiceGroup
 	emailClient  *client.EmailClient
+}
+
+// UserWithRoleAndCategory 包含用户信息及其角色和类别
+type UserWithRoleAndCategory struct {
+	User     *entity.User
+	Role     security.Role
+	Category security.OuUser
 }
 
 func NewServiceManager(serviceUser *ServiceUser, serviceGroup *ServiceGroup, emailClient *client.EmailClient) *ServiceManager {
@@ -151,6 +159,10 @@ func (s *ServiceManager) GetRoleByUid(uid string) (security.Role, error) {
 }
 func (s *ServiceManager) GetRole(user *entity.User) (security.Role, error) {
 	return s.serviceGroup.GetRole(user)
+}
+
+func (s *ServiceManager) GetAllGroups() ([]*entity.Group, error) {
+	return s.serviceGroup.FindAll()
 }
 
 func (s *ServiceManager) GrantRoleByUidAndRoleName(uid string, roleName string) error {
@@ -291,4 +303,75 @@ func (s *ServiceManager) ModifyCategory(uid string, category string) error {
 	}
 
 	return nil
+}
+
+func (s *ServiceManager) ListWithRoleAndCategory(uid string, role security.Role) ([]*UserWithRoleAndCategory, error) {
+	users, err := s.List(uid, role)
+	if err != nil {
+		return nil, err
+	}
+
+	allGroups, err := s.serviceGroup.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// 过滤权限组（ou 为 supplementary）
+	roleGroups := make([]*entity.Group, 0)
+	for _, group := range allGroups {
+		if group.Ou == security.OuGroupSupplementary.String() {
+			roleGroups = append(roleGroups, group)
+		}
+	}
+
+	result := make([]*UserWithRoleAndCategory, 0, len(users))
+	for _, user := range users {
+		userGroups := make([]*entity.Group, 0)
+		for _, group := range roleGroups {
+			if slices.Contains(group.MemberUid, user.Uid) {
+				userGroups = append(userGroups, group)
+			}
+		}
+
+		userRole, err := security.GetRoleFromLdapGroups(userGroups)
+		if err != nil {
+			userRole = security.RoleRestricted
+		}
+
+		category, err := security.GetOuUserFromName(user.Ou)
+		if err != nil {
+			category = security.OuUserUnknown
+		}
+
+		result = append(result, &UserWithRoleAndCategory{
+			User:     user,
+			Role:     userRole,
+			Category: category,
+		})
+	}
+
+	return result, nil
+}
+
+func (s *ServiceManager) GetUserWithRoleAndCategory(authUid string, uid string, role security.Role) (*UserWithRoleAndCategory, error) {
+	user, err := s.GetUserWithAuthority(authUid, uid, role)
+	if err != nil {
+		return nil, err
+	}
+
+	userRole, err := s.GetRole(user)
+	if err != nil {
+		return nil, err
+	}
+
+	category, err := security.GetOuUserFromName(user.Ou)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserWithRoleAndCategory{
+		User:     user,
+		Role:     userRole,
+		Category: category,
+	}, nil
 }

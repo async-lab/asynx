@@ -3,12 +3,21 @@ package controller
 import (
 	"net/http"
 
-	"asynclab.club/asynx/backend/pkg/entity"
 	"asynclab.club/asynx/backend/pkg/security"
 	"asynclab.club/asynx/backend/pkg/service"
 	"github.com/dsx137/gg-gin/pkg/gggin"
 	"github.com/gin-gonic/gin"
 )
+
+// ResponseUser 包含用户基础信息加上角色和类别信息的响应结构
+type ResponseUser struct {
+	Username  string          `json:"username"`
+	SurName   string          `json:"surName"`
+	GivenName string          `json:"givenName"`
+	Mail      string          `json:"mail"`
+	Role      security.Role   `json:"role"`
+	Category  security.OuUser `json:"category"`
+}
 
 type ControllerUser struct {
 	serviceManager *service.ServiceManager
@@ -29,36 +38,50 @@ func NewControllerUser(g *gin.RouterGroup, serviceManager *service.ServiceManage
 }
 
 // @Summary      获取用户列表
-// @Description  获取所有用户列表信息。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。
+// @Description  获取所有用户列表信息（包含角色和类别）。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Success      200  {object} object{data=[]entity.User} "成功返回用户列表"
+// @Success      200  {object} object{data=[]ResponseUser} "成功返回用户列表"
 // @Failure      401  {object} object{data=string} "未授权访问"
 // @Failure      403  {object} object{data=string} "权限不足"
 // @Failure      500  {object} object{data=string} "服务器内部错误"
 // @Router       /users [get]
 // @Security     BearerAuth
-func (ctl *ControllerUser) HandleList(c *gin.Context) (*gggin.Response[[]*entity.User], *gggin.HttpError) {
+func (ctl *ControllerUser) HandleList(c *gin.Context) (*gggin.Response[[]*ResponseUser], *gggin.HttpError) {
 	guard, ok := gggin.Get[security.GuardResult](c, "guard")
 	if !ok {
 		return nil, ErrHttpGuardFail
 	}
 
-	users, err := ctl.serviceManager.List(guard.Uid, guard.Role)
+	usersWithRoleAndCategory, err := ctl.serviceManager.ListWithRoleAndCategory(guard.Uid, guard.Role)
 	if err != nil {
 		return nil, service.MapErrorToHttp(err)
 	}
-	return gggin.NewResponse(users), nil
+
+	responseUsers := make([]*ResponseUser, 0, len(usersWithRoleAndCategory))
+	for _, userWithInfo := range usersWithRoleAndCategory {
+		responseUser := &ResponseUser{
+			Username:  userWithInfo.User.Uid,
+			SurName:   userWithInfo.User.Sn,
+			GivenName: userWithInfo.User.GivenName,
+			Mail:      userWithInfo.User.Mail,
+			Role:      userWithInfo.Role,
+			Category:  userWithInfo.Category,
+		}
+		responseUsers = append(responseUsers, responseUser)
+	}
+
+	return gggin.NewResponse(responseUsers), nil
 }
 
 // @Summary      获取用户信息
-// @Description  根据用户ID获取用户详细信息。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
+// @Description  根据用户ID获取用户详细信息（包含角色和类别）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。
 // @Tags         users
 // @Accept       json
 // @Produce      json
 // @Param        uid   path      string  true  "用户ID，使用 'me' 可获取当前用户信息"
-// @Success      200  {object} object{data=entity.User} "成功返回用户信息"
+// @Success      200  {object} object{data=ResponseUser} "成功返回用户信息"
 // @Failure      400  {object} object{data=string} "请求参数错误"
 // @Failure      401  {object} object{data=string} "未授权访问"
 // @Failure      403  {object} object{data=string} "权限不足"
@@ -66,18 +89,27 @@ func (ctl *ControllerUser) HandleList(c *gin.Context) (*gggin.Response[[]*entity
 // @Failure      500  {object} object{data=string} "服务器内部错误"
 // @Router       /users/{uid} [get]
 // @Security     BearerAuth
-func (ctl *ControllerUser) HandleGet(c *gin.Context) (*gggin.Response[*entity.User], *gggin.HttpError) {
+func (ctl *ControllerUser) HandleGet(c *gin.Context) (*gggin.Response[*ResponseUser], *gggin.HttpError) {
 	guard, ok := gggin.Get[security.GuardResult](c, "guard")
 	if !ok {
 		return nil, ErrHttpGuardFail
 	}
 
-	user, err := ctl.serviceManager.GetUserWithAuthority(guard.Uid, c.Param("uid"), guard.Role)
+	userWithInfo, err := ctl.serviceManager.GetUserWithRoleAndCategory(guard.Uid, c.Param("uid"), guard.Role)
 	if err != nil {
 		return nil, service.MapErrorToHttp(err)
 	}
 
-	return gggin.NewResponse(user), nil
+	responseUser := &ResponseUser{
+		Username:  userWithInfo.User.Uid,
+		SurName:   userWithInfo.User.Sn,
+		GivenName: userWithInfo.User.GivenName,
+		Mail:      userWithInfo.User.Mail,
+		Role:      userWithInfo.Role,
+		Category:  userWithInfo.Category,
+	}
+
+	return gggin.NewResponse(responseUser), nil
 }
 
 type RequestChangePassword struct {
