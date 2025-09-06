@@ -189,6 +189,9 @@ func (s *ServiceManager) GenerateNextUidNumber() (string, error) {
 
 func (s *ServiceManager) CheckUserExists(username string) (bool, error) {
 	user, err := s.serviceUser.FindByUid(username)
+	if err == ErrUserNotFound {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
