@@ -22,7 +22,7 @@
           </el-col>
           <el-col :span="12">
             <div class="welcome-actions">
-              <img class="brand-logo" src="/async0.svg" alt="AsyncLab" />
+              <img class="brand-logo" src="../assets/async1.png" alt="AsyncLab" />
               <el-button 
                 type="primary" 
                 size="large" 

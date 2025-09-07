@@ -24,8 +24,17 @@ interface ApiResponse<T = any> {
 
 axios.defaults.withCredentials = true
 
+// 获取API基础URL，优先使用环境变量，否则使用当前域名的/api路径
+const getApiBaseUrl = () => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL
+    }
+    // 默认使用当前域名的/api路径
+    return `${window.location.origin}/api`
+}
+
 const request = axios.create({
-    baseURL: '/api'
+    baseURL: getApiBaseUrl()
 })
 
 // 添加请求拦截-token处理

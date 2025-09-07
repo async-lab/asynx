@@ -2,7 +2,7 @@
   <section class="home-hero" :class="compact ? 'compact' : ''">
     <canvas ref="particlesCanvas" class="hero-particles"></canvas>
     <div class="hero-main">
-      <img class="hero-logo" src="/async0.svg" alt="AsyncLab" />
+      <img class="hero-logo" src="../assets/async1.png" alt="AsyncLab" />
       <div class="hero-texts">
         <h1 class="hero-title">{{ title }}</h1>
         <p v-if="subtitle" class="hero-subtitle">{{ subtitle }}</p>
@@ -38,7 +38,7 @@ const props = withDefaults(defineProps<{
   links: () => ([
     { label: 'Asyncraft 官网', href: 'https://www.asyncraft.club/' },
     { label: 'AsyncLab GitHub', href: 'https://github.com/async-lab' },
-    { label: 'AsyncLab Gitlab', href: 'https://gitlab.asyncraft.club/' }
+    { label: 'AsyncLab Gitlab', href: 'https://gitlab.asynclab.club/' }
   ]),
   compact: false
 })

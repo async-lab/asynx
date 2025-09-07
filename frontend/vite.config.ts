@@ -11,9 +11,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://asynx.internal.asynclab.club/',
+        target: process.env.VITE_API_BASE_URL || 'https://asynx.internal.asynclab.club',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   }
