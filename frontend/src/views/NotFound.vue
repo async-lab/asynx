@@ -1,5 +1,6 @@
 <template>
   <div class="not-found">
+    <canvas ref="particlesCanvas" class="particles-canvas"></canvas>
     <div class="not-found-content">
       <div class="error-code">404</div>
       <h1 class="error-title">页面未找到</h1>
@@ -33,6 +34,7 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 
 const router = useRouter()
 
@@ -49,6 +51,104 @@ const goBack = () => {
     router.push('/')
   }
 }
+
+// 进入 404 页面后 10 秒自动返回首页
+let autoTimer: number | undefined
+onMounted(() => {
+  autoTimer = window.setTimeout(() => {
+    router.push('/')
+  }, 10000)
+
+  // 初始化粒子效果
+  initParticles()
+  window.addEventListener('resize', resizeCanvas)
+})
+
+onBeforeUnmount(() => {
+  if (autoTimer) {
+    clearTimeout(autoTimer)
+    autoTimer = undefined
+  }
+  cancelAnimationFrame(animationId)
+  window.removeEventListener('resize', resizeCanvas)
+})
+
+// 粒子效果（与登录页一致风格的精简版）
+const particlesCanvas = ref<HTMLCanvasElement | null>(null)
+let ctx: CanvasRenderingContext2D | null = null
+let animationId = 0
+
+interface Particle { x: number; y: number; vx: number; vy: number }
+let particles: Particle[] = []
+
+const resizeCanvas = () => {
+  if (!particlesCanvas.value) return
+  const dpr = window.devicePixelRatio || 1
+  const rect = particlesCanvas.value.getBoundingClientRect()
+  particlesCanvas.value.width = Math.floor(rect.width * dpr)
+  particlesCanvas.value.height = Math.floor(rect.height * dpr)
+  ctx = particlesCanvas.value.getContext('2d')
+  if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+}
+
+const initParticles = () => {
+  if (!particlesCanvas.value) return
+  resizeCanvas()
+  const rect = particlesCanvas.value.getBoundingClientRect()
+  const area = rect.width * rect.height
+  const density = 0.00012
+  const count = Math.max(14, Math.min(200, Math.floor(area * density)))
+  particles = Array.from({ length: count }).map(() => ({
+    x: Math.random() * rect.width,
+    y: Math.random() * rect.height,
+    vx: (Math.random() - 0.5) * 0.6,
+    vy: (Math.random() - 0.5) * 0.6
+  }))
+  animate()
+}
+
+const draw = () => {
+  if (!ctx || !particlesCanvas.value) return
+  const { width, height } = particlesCanvas.value.getBoundingClientRect()
+  ctx.clearRect(0, 0, width, height)
+
+  const maxDist = 120
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x
+      const dy = particles[i].y - particles[j].y
+      const dist = Math.hypot(dx, dy)
+      if (dist < maxDist) {
+        const alpha = 1 - dist / maxDist
+        ctx.strokeStyle = `rgba(64,158,255,${alpha * 0.8})`
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(particles[i].x, particles[i].y)
+        ctx.lineTo(particles[j].x, particles[j].y)
+        ctx.stroke()
+      }
+    }
+  }
+
+  for (const p of particles) {
+    ctx.fillStyle = 'rgba(64,158,255,0.9)'
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
+    ctx.fill()
+  }
+}
+
+const animate = () => {
+  const { width, height } = particlesCanvas.value!.getBoundingClientRect()
+  for (const p of particles) {
+    p.x += p.vx
+    p.y += p.vy
+    if (p.x < 0 || p.x > width) p.vx *= -1
+    if (p.y < 0 || p.y > height) p.vy *= -1
+  }
+  draw()
+  animationId = requestAnimationFrame(animate)
+}
 </script>
 
 <style scoped>
@@ -58,8 +158,22 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(64, 158, 255, 0.12), transparent),
+              radial-gradient(800px 400px at 90% 80%, rgba(103, 194, 58, 0.12), transparent),
+              linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   padding: 20px;
+}
+
+/* 粒子画布，与登录页保持一致 */
+.particles-canvas {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  opacity: 0.6;
+  z-index: 0;
 }
 
 .not-found-content {

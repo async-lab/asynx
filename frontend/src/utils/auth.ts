@@ -117,7 +117,7 @@ export function getStoredCategory(): string | undefined {
     return up?.category
 }
 
-// ======== 本地加密记住密码（仅用于提升体验，不等同于安全存储） ========
+// ======== 本地加密记住密码 ========
 
 async function deriveAesKey(username: string): Promise<CryptoKey> {
     const enc = new TextEncoder()

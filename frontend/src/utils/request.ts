@@ -94,15 +94,30 @@ request.interceptors.response.use(
                 ? payload
                 : (typeof payload?.data === 'string' ? payload.data : (payload?.msg || payload?.message || ''))
 
-            if (text && text.includes('密码强度不够')) {
-                useFailedTip('密码强度不够')
-                return Promise.reject(new Error('密码强度不够'))
-            }
-
-            useFailedTip(text || '请求参数错误 (400)')
-            return Promise.reject(error)
+            // if (text && text.includes('密码强度不够')) {
+            //     useFailedTip('密码强度不够')
+            //     return Promise.reject(new Error('密码强度不够'))
+            // }else if (text && text.includes('用户名已存在')) {
+            //     useFailedTip('用户名已存在')
+            //     return Promise.reject(new Error('用户名已存在'))
+            // }else if (text && text.includes('密码不符合要求')) {
+            //     useFailedTip('密码不符合要求')
+            //     return Promise.reject(new Error('密码不符合要求'))
+            // }
+            const display = typeof text === 'string'
+                ? (text.split(':')[0]?.trim() || '请求参数错误 (400)')
+                : '请求参数错误 (400)'
+            useFailedTip(display)
+            return Promise.reject(display)
         }
-
+        if (status === 401) {
+            const payload: any = error.response?.data
+            const text = typeof payload === 'string'
+                ? payload
+                : (typeof payload?.data === 'string' ? payload.data : (payload?.msg || payload?.message || ''))
+            useFailedTip(text)
+            return Promise.reject(text)
+        }
         // 检查是否是HTML响应（通常表示重定向到前端页面）
         if (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('<!doctype html>')) {
             console.error('API请求被重定向到前端页面，请检查代理配置或后端服务状态')

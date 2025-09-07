@@ -5,7 +5,7 @@
       <template #header>
         <div class="card-header">
           <h3>个人资料</h3>
-          <el-button type="primary" link @click="goDashboard">返回仪表板</el-button>
+          <el-button type="primary" link @click="goDashboard">返回</el-button>
         </div>
       </template>
 
@@ -45,20 +45,21 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 import type { FormInstance, FormRules } from 'element-plus'
-import { getUserProfile } from '@/utils/auth'
+import { getUserProfile, setUserProfile } from '@/utils/auth'
 import { changePassword } from '@/api/user'
 import { useSuccessTip, useFailedTip } from '@/utils/msgTip'
 import type { User } from '@/api/types'
+import { getMeInfo } from '@/api/user'
 
-const emptyProfile: User = { username: '', givenName: '', surName: '', mail: '' }
+const emptyProfile: User = { username: '', givenName: '', surName: '', mail: '', role: '', category: '' }
 const profile = reactive<User>({ ...emptyProfile, ...(getUserProfile() || {}) })
 const infoItems = computed(() => [
   { label: '用户名', value: profile.username || '-' },
   { label: '姓', value: profile.surName || '-' },
   { label: '名', value: profile.givenName || '-' },
   { label: '邮箱', value: profile.mail || '-' },
-  { label: '角色', value: (profile as any)?.role || '-' },
-  { label: '类型', value: (profile as any)?.category || '-' }
+  { label: '角色', value: profile.role || '-' },
+  { label: '类型', value: profile.category || '-' }
 ])
 
 // 密码表单
@@ -87,6 +88,16 @@ const pwdRules: FormRules<typeof pwdForm> = {
 onMounted(() => {
   const up = getUserProfile()
   if (up) Object.assign(profile, up)
+  // 进入设置页重新拉取资料并更新本地缓存与页面数据
+  getMeInfo()
+    .then((res: any) => {
+      const me = (res as any)?.data ?? res
+      if (me && typeof me === 'object') {
+        setUserProfile(me)
+        Object.assign(profile, { ...emptyProfile, ...me })
+      }
+    })
+    .catch(() => {})
 })
 
 const onChangePassword = async () => {
@@ -102,6 +113,7 @@ const onChangePassword = async () => {
     useSuccessTip('密码已更新')
     pwdForm.password = ''
     pwdForm.confirm = ''
+    router.push('/dashboard')
   } catch (e: any) {
     const raw = e?.msg || e?.message || e?.data || e?.response?.data
     const text = typeof raw === 'string' ? raw : ''

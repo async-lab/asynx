@@ -1,6 +1,5 @@
 import request from '../utils/request'
 import type { 
-    User, 
     RegisterRequest, 
     ChangePasswordRequest, 
     ModifyRoleRequest, 
@@ -68,24 +67,6 @@ export function deleteUser(uid: string) {
 }
 
 /**
- * 获取账号类型
- * @param {string} uid 用户ID，使用 'me' 可获取当前用户类型
- * @returns 账号类型: system|member|external
- */
-export function getUserCategory(uid: string) {
-    return request({
-        url: `/users/${uid}/category`,
-        method: 'GET'
-    })
-}
-
-export function getMyCategory() {
-    return request({
-        url: '/users/me/category',
-        method: 'GET'
-    })
-}
-/**
  * 更改账号类型
  * @param {string} uid 用户ID，不能使用 'me'
  * @param {Object} reqData 修改账号类型请求数据
@@ -122,23 +103,6 @@ export function changeMyPassword(reqData: ChangePasswordRequest) {
     })
 }
 
-/**
- * 获取账号角色
- * @param {string} uid 用户ID，使用 'me' 可获取当前用户角色
- * @returns 账号角色: admin|default|restricted
- */
-export function getUserRole(uid: string) {
-    return request({
-        url: `/users/${uid}/role`,
-        method: 'GET'
-    })
-}
-export function getMyRole() {
-    return request({
-        url: '/users/me/role',
-        method: 'GET'
-    })
-}
 
 /**
  * 更改账号角色

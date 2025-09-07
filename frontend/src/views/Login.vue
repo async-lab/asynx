@@ -1,6 +1,5 @@
 <template>
   <div class="login-container">
-    <!-- 粒子效果画布（左下角） -->
     <canvas ref="particlesCanvas" class="particles-canvas"></canvas>
     <div class="login-box">
       <el-card class="login-card" shadow="hover">
@@ -19,6 +18,10 @@
               <li>
                 <el-icon><Setting /></el-icon>
                 <a href="https://github.com/async-lab" target="_blank">AsyncLab GitHub</a>
+              </li>
+              <li>
+                <el-icon><Box /></el-icon>
+                <a href="https://gitlab.asynclab.club/" target="_blank">AsyncLab Gitlab</a>
               </li>
             </ul>
           </div>
@@ -92,13 +95,13 @@
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
-import { getUsername, setUsername, setToken, setUserProfile, setUserRoleCategory } from '@/utils/auth'
-import { getMeInfo, getMyRole, getMyCategory } from '@/api/user'
+import { getUsername, setUsername, setToken, setUserProfile } from '@/utils/auth'
+import { getMeInfo } from '@/api/user'
 import { saveEncryptedPassword, loadEncryptedPassword, clearEncryptedPassword } from '@/utils/auth'
 import { useFailedTip, useSuccessTip } from '@/utils/msgTip'
 import { createToken } from '@/api/auth'
 import type { LoginRequest } from '@/api/types'
-import { Promotion, Setting } from '@element-plus/icons-vue'
+import { Box, Promotion, Setting } from '@element-plus/icons-vue'
 import { User, Lock } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -173,13 +176,6 @@ const handleLogin = async () => {
         if (me) {
           setUserProfile(me)
         }
-        // 并行获取并保存角色与类型
-        try {
-          const [roleRes, categoryRes] = await Promise.all([getMyRole() as any, getMyCategory() as any])
-          const role = (roleRes as any)?.role ?? (roleRes as any)?.data ?? roleRes
-          const category = (categoryRes as any)?.category ?? (categoryRes as any)?.data ?? categoryRes
-          setUserRoleCategory(role, category)
-        } catch {}
       } catch (e) {
         // 忽略获取用户信息失败
       }

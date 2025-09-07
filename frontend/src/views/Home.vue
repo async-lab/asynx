@@ -74,6 +74,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getToken } from '@/utils/auth'
+// 恢复到原页面结构，不再使用 HomeHero 组件
 
 
 const router = useRouter()
@@ -98,9 +99,8 @@ const goToDashboard = () => {
 <style scoped>
 .home {
   max-width: 1200px;
-  min-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
   min-height: 600px;
 }
 
@@ -139,7 +139,7 @@ const goToDashboard = () => {
 }
 
 .welcome-content {
-  padding: 20px 0;
+  padding: 16px 0;
   min-height: 150px;
 }
 
@@ -245,8 +245,8 @@ const goToDashboard = () => {
   font-size: 14px;
 }
 .brand-logo {
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
 }
 
 .join-content {
@@ -263,6 +263,24 @@ const goToDashboard = () => {
   gap: 24px;
   max-width: 800px;
   margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+  .home { padding: 16px; }
+}
+
+@media (max-width: 992px) {
+  .brand-logo { width: 160px; height: 160px; }
+}
+
+@media (max-width: 768px) {
+  .home { padding: 12px; }
+  .welcome-content { padding: 12px 0; }
+  .brand-logo { width: 140px; height: 140px; }
+}
+
+@media (max-width: 576px) {
+  .brand-logo { width: 120px; height: 120px; }
 }
 
 .join-poster {

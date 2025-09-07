@@ -3,7 +3,7 @@
     <!-- 顶部导航栏 -->
     <el-header class="dashboard-header">
       <div class="header-left">
-        <h2>AsyncLab 仪表板</h2>
+        <h2>AsyncLab</h2>
       </div>
       <div class="header-right">
         <el-dropdown @command="handleCommand">
@@ -31,10 +31,10 @@
           @select="handleMenuSelect"
         >
           <el-menu-item index="overview">
-            <el-icon><User /></el-icon>
+            <el-icon><House /></el-icon>
             <span>概览</span>
           </el-menu-item>
-          <el-menu-item index="users">
+          <el-menu-item index="users" v-if="!isRestricted">
             <el-icon><User /></el-icon>
             <span>用户管理</span>
           </el-menu-item>
@@ -52,15 +52,15 @@
           
           <div class="dashboard-content">
             <div v-if="activeMenu === 'overview'" class="overview-page">
-              <h4>系统概览</h4>
-              <p>欢迎使用 AsyncLab 仪表板</p>
+              <HomeHero compact />
             </div>
             <UsersPage 
               v-else-if="activeMenu === 'users'"
               :users="users"
+              :is-admin="isAdmin"
+              :loading="usersLoading"
               @create="createUser"
-              @edit="editUser"
-              @delete="deleteUser"
+              @refresh="loadUsers"
             />
           </div>
         </el-card>
@@ -70,24 +70,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watchEffect, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { removeToken, getUserProfile, clearUserProfile } from '@/utils/auth'
 import { useWarningConfirm } from '@/utils/msgTip'
 import { 
   ArrowDown, 
+  House, 
   User 
 } from '@element-plus/icons-vue'
 import UsersPage from '@/components/dashboard/UsersPage.vue'
+import HomeHero from '@/components/HomeHero.vue'
+import { getUserList } from '@/api/user'
+import type { User as ApiUser } from '@/api/types'
 
 type MenuKey = 'overview' | 'projects' | 'users'
-
-interface UserItem {
-  username: string
-  email: string
-  role: string
-  status: 'active' | 'disabled'
-}
 
 const router = useRouter()
 const activeMenu = ref<MenuKey>('overview')
@@ -98,11 +95,13 @@ const fullName = computed(() => {
 })
 
 // 用户数据
-const users = ref<UserItem[]>([
-  { username: 'admin', email: 'admin@example.com', role: '管理员', status: 'active' },
-  { username: 'user1', email: 'user1@example.com', role: '普通用户', status: 'active' },
-  { username: 'user2', email: 'user2@example.com', role: '普通用户', status: 'disabled' }
-])
+const users = ref<ApiUser[]>([])
+const usersLoading = ref<boolean>(false)
+
+const profile = computed(() => (getUserProfile() as any) || {})
+const isAdmin = computed(() => profile.value?.role === 'admin')
+const isDefault = computed(() => profile.value?.role === 'default')
+const isRestricted = computed(() => profile.value?.role === 'restricted')
 
 // 获取页面标题
 const getPageTitle = () => {
@@ -148,13 +147,43 @@ const createUser = () => {
   console.log('创建用户')
 }
 
-const editUser = (user: any) => {
-  console.log('编辑用户:', user)
+// 已由 UsersPage 内部处理编辑/删除，通过 refresh 事件回传，这里无需实现
+
+// 加载用户列表并按权限过滤
+onMounted(async () => {
+  if (activeMenu.value !== 'users') return
+})
+
+// 进入用户管理时拉取数据
+const loadUsers = async () => {
+  usersLoading.value = true
+  const list = await getUserList() as any
+  let data: ApiUser[] = Array.isArray(list?.data) ? list.data : (Array.isArray(list) ? list : [])
+  if (isAdmin.value) {
+    users.value = data
+  } else if (isDefault.value) {
+    // 仅同组（按 category 分组）
+    const myCategory = profile.value?.category
+    users.value = data.filter((u: any) => u.category === myCategory && u.role === 'default')
+  } else if (isRestricted.value) {
+    users.value = []
+  }
+  await nextTick()
+  usersLoading.value = false
 }
 
-const deleteUser = (user: any) => {
-  console.log('删除用户:', user)
-}
+// 切换到用户管理菜单时触发
+watchEffect(() => {
+  if (activeMenu.value === 'users') {
+    if (isRestricted.value) {
+      // 无权限访问
+      users.value = []
+      usersLoading.value = false
+    } else {
+      loadUsers()
+    }
+  }
+})
 
 
 </script>
@@ -162,7 +191,6 @@ const deleteUser = (user: any) => {
 <style scoped>
 .dashboard {
   min-height: 100vh;
-  min-width: 1200px;
   display: flex;
   flex-direction: column;
 }
@@ -214,13 +242,11 @@ const deleteUser = (user: any) => {
 .dashboard-main {
   padding: 20px;
   background: #f5f7fa;
-  min-width: 800px;
   min-height: calc(100vh - 60px);
 }
 
 .dashboard-content {
   min-height: 400px;
-  min-width: 600px;
 }
 
 .card-header {
@@ -238,6 +264,33 @@ const deleteUser = (user: any) => {
 .overview-page,
 .projects-page {
   min-height: 500px;
-  min-width: 600px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-header { padding: 0 12px; }
+  .dashboard-main { padding: 12px; }
+}
+
+@media (max-width: 992px) {
+  .dashboard-container { display: block; }
+  .dashboard-sidebar { width: 100%; min-width: auto; border-right: none; border-bottom: 1px solid #e4e7ed; }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header { min-height: 56px; }
+  .dashboard-main { padding: 10px; }
+}
+
+/* 概览为空白占位，不添加多余内容 */
+
+.overview-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 120px;
+  height: 120px;
 }
 </style> 

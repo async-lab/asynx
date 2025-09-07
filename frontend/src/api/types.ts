@@ -15,6 +15,8 @@ export interface User {
     givenName: string
     surName: string
     mail: string
+    role: string
+    category: string
 }
 
 /**
