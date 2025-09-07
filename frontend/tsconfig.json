@@ -1,4 +1,9 @@
 {
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "moduleResolution": "bundler"
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

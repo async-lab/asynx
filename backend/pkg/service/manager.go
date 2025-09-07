@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -78,7 +79,7 @@ func (s *ServiceManager) Register(username, surName, givenName, mail, category, 
 	}
 
 	_, err = s.serviceUser.FindByUid(username)
-	if err != nil && err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -149,6 +150,9 @@ func (s *ServiceManager) unregister(user *entity.User) error {
 func (s *ServiceManager) Unregister(uid string) error {
 	user, err := s.serviceUser.FindByUid(uid)
 	if err != nil {
+		if !errors.Is(err, ErrNotFound) {
+			return err
+		}
 		return err
 	}
 
@@ -194,20 +198,26 @@ func (s *ServiceManager) GenerateNextUidNumber() (string, error) {
 }
 
 func (s *ServiceManager) GetUserWithGuard(guard *security.GuardResult, uid string) (*entity.User, error) {
-	if uid == "me" {
-		uid = guard.Uid
-	}
-
 	var (
 		user *entity.User
 		err  error
 	)
 
+	authUser, err := s.serviceUser.FindByUid(guard.Uid)
+	if err != nil {
+		return nil, err
+	}
+
+	ou, err := security.GetOuUserFromName(authUser.Ou)
+	if err != nil {
+		return nil, err
+	}
+
 	switch guard.Role {
 	case security.RoleAdmin:
 		user, err = s.serviceUser.FindByUid(uid)
 	case security.RoleDefault:
-		user, err = s.serviceUser.FindByOuAndUid(security.OuUserMember, uid)
+		user, err = s.serviceUser.FindByOuAndUid(ou, uid)
 	default:
 		if guard.Uid != uid {
 			return nil, nil

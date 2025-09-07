@@ -26,7 +26,7 @@ func (s *ServiceUser) FindByUid(uid string) (*entity.User, error) {
 		return nil, err
 	}
 	if user == nil {
-		return nil, ErrNotFound
+		return nil, WrapError(ErrNotFound, fmt.Sprintf("user %s not found", uid))
 	}
 	return user, nil
 }
@@ -37,7 +37,7 @@ func (s *ServiceUser) FindByOuAndUid(ou security.OuUser, uid string) (*entity.Us
 		return nil, err
 	}
 	if user == nil {
-		return nil, ErrNotFound
+		return nil, WrapError(ErrNotFound, fmt.Sprintf("user %s not found", uid))
 	}
 	return user, nil
 }

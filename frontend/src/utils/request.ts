@@ -74,59 +74,9 @@ request.interceptors.response.use(
             return Promise.resolve(data)
         }
         
-        const codeStr = data.code + ''
-        
-        if (codeStr === '200') {
-            // useSuccessTip(data.msg)
-            return Promise.resolve(data.data)
-        } else {
-            // useSuccessTip(data.msg)
-            if (codeStr === '401') { // authorized，token过期或token异常等的返回码
-                useWarningConfirm('登录过期或异常，即将跳转登录页，重新登录').then(() => {
-                    removeToken()
-                    window.location.reload()
-                })
-            } else if (codeStr === '403') { // 没有权限的情况
-                useFailedTip("您没有权限进行该操作！")
-            } else {
-                useFailedTip(data.msg)
-            }
-            return Promise.reject(data)
-        }
+        return Promise.resolve(data.data)
     },
     (error: AxiosError) => {
-        // 针对 400 错误的统一处理（如密码强度不够等）
-        const status = error.response?.status
-        if (status === 400) {
-            const payload: any = error.response?.data
-            const text = typeof payload === 'string'
-                ? payload
-                : (typeof payload?.data === 'string' ? payload.data : (payload?.msg || payload?.message || ''))
-
-            // if (text && text.includes('密码强度不够')) {
-            //     useFailedTip('密码强度不够')
-            //     return Promise.reject(new Error('密码强度不够'))
-            // }else if (text && text.includes('用户名已存在')) {
-            //     useFailedTip('用户名已存在')
-            //     return Promise.reject(new Error('用户名已存在'))
-            // }else if (text && text.includes('密码不符合要求')) {
-            //     useFailedTip('密码不符合要求')
-            //     return Promise.reject(new Error('密码不符合要求'))
-            // }
-            const display = typeof text === 'string'
-                ? (text.split(':')[0]?.trim() || '请求参数错误 (400)')
-                : '请求参数错误 (400)'
-            useFailedTip(display)
-            return Promise.reject(display)
-        }
-        if (status === 401) {
-            const payload: any = error.response?.data
-            const text = typeof payload === 'string'
-                ? payload
-                : (typeof payload?.data === 'string' ? payload.data : (payload?.msg || payload?.message || ''))
-            useFailedTip(text)
-            return Promise.reject(text)
-        }
         // 检查是否是HTML响应（通常表示重定向到前端页面）
         if (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('<!doctype html>')) {
             console.error('API请求被重定向到前端页面，请检查代理配置或后端服务状态')
@@ -141,7 +91,23 @@ request.interceptors.response.use(
                 window.location.reload()
             })
         }
-        return Promise.reject(error)
+
+        const status = error.response?.status
+
+        if (status === 401) { // authorized，token过期或token异常等的返回码
+            useWarningConfirm('登录过期或异常，即将跳转登录页，重新登录').then(() => {
+                removeToken()
+                window.location.reload()
+            })
+            return Promise.reject(error)
+        }
+
+        const payload: any = error.response?.data
+        const text = typeof payload === 'string'
+            ? payload
+            : (typeof payload?.data === 'string' ? payload.data : (payload?.msg || payload?.message || ''))
+        useFailedTip(text)
+        return Promise.reject(text)
     }
 )
 

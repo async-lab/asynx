@@ -36,7 +36,7 @@ func ValidatePasswordStrength(password string) error {
 	// }
 
 	if len(password) < 12 {
-		return fmt.Errorf("password is too short; it must be at least 12 characters long")
+		return fmt.Errorf("password is too short, it must be at least 12 characters long")
 	}
 	// if !hasUpper {
 	// 	return fmt.Errorf("password must contain at least one uppercase letter")

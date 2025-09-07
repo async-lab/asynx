@@ -6,34 +6,42 @@
           <h1>欢迎来到 AsyncLab</h1>
         </div>
       </template>
-      
+
       <div class="welcome-content">
         <el-row :gutter="20">
           <el-col :span="12">
             <div class="welcome-text">
               <h2>异步开发实验室</h2>
               <div>
-                 <p>欢迎每一个热爱开发的人！</p>
-                 <p>本网站为异步开发实验室的官方网站，旨在学习交流开发经验，共同进步。</p>
-                 <p>欢迎加入我们，一起探索开发的世界！</p>
-                 <p>在这里你可以探索各种开发技术，学习各种开发知识，提高自己的开发能力。</p>
+                <p>欢迎每一个热爱开发的人！</p>
+                <p>
+                  本网站为异步开发实验室的官方网站，旨在学习交流开发经验，共同进步。
+                </p>
+                <p>欢迎加入我们，一起探索开发的世界！</p>
+                <p>
+                  在这里你可以探索各种开发技术，学习各种开发知识，提高自己的开发能力。
+                </p>
               </div>
             </div>
           </el-col>
           <el-col :span="12">
             <div class="welcome-actions">
-              <img class="brand-logo" src="../assets/async1.png" alt="AsyncLab" />
-              <el-button 
-                type="primary" 
-                size="large" 
+              <img
+                class="brand-logo"
+                src="../assets/async.png"
+                alt="AsyncLab"
+              />
+              <el-button
+                type="primary"
+                size="large"
                 @click="goToLogin"
                 v-if="!isLoggedIn"
               >
                 立即登录
               </el-button>
-              <el-button 
-                type="success" 
-                size="large" 
+              <el-button
+                type="success"
+                size="large"
                 @click="goToDashboard"
                 v-if="isLoggedIn"
               >
@@ -51,49 +59,62 @@
           <h3>AsyncLab 加入我们</h3>
         </div>
       </template>
-      
+
       <div class="join-content">
         <div class="poster-container">
           <div class="intro-text">
-            <p>异步开发实验室全称 <strong>Asynchronous Lab</strong>，隶属于网络空间安全学院（前身为 IOTU），主要开设前端、后端（Java、Golang）、移动端（Android）、嵌入式等技术方向。</p>
-            
-            <p>异步，可能有的同学还不太了解它的含义。简言之，可以理解为两个人向他们各自的目标迈进，但是互相不用等着对方，只管自己有条不紊前进就好。我们不需要每个人的进度同步，只是希望同学们通过加入实验室，都能离自己的梦想更进一步，找到自己所爱，这也是实验室的意义所在。</p>
-            
-            <p>我们实验室成立的初衷就是为了给各位喜欢开发、热爱创造的同学们，提供良好的学习氛围、安静的学习场所，以及与有着同样爱好的同学交流、共同成长的机会。</p>
-            
-            <p>另外，实验室于 2013 年成立，到现在已经有 9 年的历史了，所以会有很多已经毕业工作的学长给还在学校的我们提供很多帮助，比如互联网大厂内推、业界一线的情况等等。</p>
+            <p>
+              异步开发实验室全称
+              <strong>Asynchronous Lab</strong>，隶属于网络空间安全学院（前身为
+              IOTU），主要开设前端、后端（Java、Golang）、移动端（Android）、嵌入式等技术方向。
+            </p>
+
+            <p>
+              异步，可能有的同学还不太了解它的含义。简言之，可以理解为两个人向他们各自的目标迈进，但是互相不用等着对方，只管自己有条不紊前进就好。我们不需要每个人的进度同步，只是希望同学们通过加入实验室，都能离自己的梦想更进一步，找到自己所爱，这也是实验室的意义所在。
+            </p>
+
+            <p>
+              我们实验室成立的初衷就是为了给各位喜欢开发、热爱创造的同学们，提供良好的学习氛围、安静的学习场所，以及与有着同样爱好的同学交流、共同成长的机会。
+            </p>
+
+            <p>
+              另外，实验室于 2013 年成立，到现在已经有 9
+              年的历史了，所以会有很多已经毕业工作的学长给还在学校的我们提供很多帮助，比如互联网大厂内推、业界一线的情况等等。
+            </p>
           </div>
-          <img class="join-poster" src="../assets/海报.png" alt="AsyncLab 加入我们" />
+          <img
+            class="join-poster"
+            src="../assets/海报.png"
+            alt="AsyncLab 加入我们"
+          />
         </div>
       </div>
     </el-card>
-   </div>
- </template>
+  </div>
+</template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { getToken } from '@/utils/auth'
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+import { getToken } from "@/utils/auth";
 // 恢复到原页面结构，不再使用 HomeHero 组件
 
-
-const router = useRouter()
+const router = useRouter();
 
 // 计算是否已登录
 const isLoggedIn = computed(() => {
-  return !!getToken()
-})
-
+  return !!getToken();
+});
 
 // 跳转到登录页
 const goToLogin = () => {
-  router.push('/login')
-}
+  router.push("/login");
+};
 
 // 跳转到仪表板
 const goToDashboard = () => {
-  router.push('/dashboard')
-}
+  router.push("/dashboard");
+};
 </script>
 
 <style scoped>
@@ -266,21 +287,36 @@ const goToDashboard = () => {
 }
 
 @media (max-width: 1200px) {
-  .home { padding: 16px; }
+  .home {
+    padding: 16px;
+  }
 }
 
 @media (max-width: 992px) {
-  .brand-logo { width: 160px; height: 160px; }
+  .brand-logo {
+    width: 160px;
+    height: 160px;
+  }
 }
 
 @media (max-width: 768px) {
-  .home { padding: 12px; }
-  .welcome-content { padding: 12px 0; }
-  .brand-logo { width: 140px; height: 140px; }
+  .home {
+    padding: 12px;
+  }
+  .welcome-content {
+    padding: 12px 0;
+  }
+  .brand-logo {
+    width: 140px;
+    height: 140px;
+  }
 }
 
 @media (max-width: 576px) {
-  .brand-logo { width: 120px; height: 120px; }
+  .brand-logo {
+    width: 120px;
+    height: 120px;
+  }
 }
 
 .join-poster {
@@ -315,4 +351,4 @@ const goToDashboard = () => {
   color: #409eff;
   font-weight: 600;
 }
-</style> 
+</style>

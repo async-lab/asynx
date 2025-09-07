@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"asynclab.club/asynx/backend/pkg/entity"
@@ -25,7 +26,7 @@ func (r *ServiceGroup) FindByOuAndCn(ou security.OuGroup, cn string) (*entity.Gr
 		return nil, err
 	}
 	if group == nil {
-		return nil, ErrNotFound
+		return nil, WrapError(ErrNotFound, fmt.Sprintf("group %s not found", cn))
 	}
 	return group, nil
 }
@@ -114,10 +115,10 @@ func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 
 	// 如果是角色切换：先从旧组移除，再添加到新组
 	oldGroup, err := s.FindByOuAndCn(security.OuGroupSupplementary, oldRole.String())
-	if err != nil && err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		return err
 	}
-	oldNotFound := err == ErrNotFound
+	oldNotFound := errors.Is(err, ErrNotFound)
 	if !oldNotFound {
 		if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil); err != nil {
 			return err

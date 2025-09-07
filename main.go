@@ -5,10 +5,9 @@ import (
 
 	"asynclab.club/asynx/backend/cmd"
 	"github.com/joho/godotenv"
-
 )
 
-//go:embed frontend/dist/* templates/*
+//go:embed all:frontend/dist/* all:templates/*
 var embedFS embed.FS
 
 // @title Asynx API 文档

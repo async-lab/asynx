@@ -6,22 +6,32 @@
         <div class="card-body">
           <div class="brand-pane">
             <div class="brand-header">
-              <img class="brand-logo" src="../assets/async1.png" alt="AsyncLab" />
+              <img
+                class="brand-logo"
+                src="../assets/async.png"
+                alt="AsyncLab"
+              />
               <h2>AsyncLab</h2>
               <p>欢迎每一个热爱开发的人</p>
             </div>
             <ul class="brand-highlights">
               <li>
                 <el-icon><Promotion /></el-icon>
-                <a href="https://www.asyncraft.club/" target="_blank">Asyncraft官网</a>
+                <a href="https://www.asyncraft.club/" target="_blank"
+                  >Asyncraft官网</a
+                >
               </li>
               <li>
                 <el-icon><Setting /></el-icon>
-                <a href="https://github.com/async-lab" target="_blank">AsyncLab GitHub</a>
+                <a href="https://github.com/async-lab" target="_blank"
+                  >AsyncLab GitHub</a
+                >
               </li>
               <li>
                 <el-icon><Box /></el-icon>
-                <a href="https://gitlab.asynclab.club/" target="_blank">AsyncLab Gitlab</a>
+                <a href="https://gitlab.asynclab.club/" target="_blank"
+                  >AsyncLab Gitlab</a
+                >
               </li>
             </ul>
           </div>
@@ -77,11 +87,13 @@
                 size="large"
                 class="submit-btn"
               >
-                {{ loading ? '登录中...' : '登录' }}
+                {{ loading ? "登录中..." : "登录" }}
               </el-button>
 
               <div class="footer-links">
-                <el-button type="text" class="link" @click="goToHome">返回首页</el-button>
+                <el-button type="text" class="link" @click="goToHome"
+                  >返回首页</el-button
+                >
               </div>
             </el-form>
           </div>
@@ -92,218 +104,234 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import type { FormInstance, FormRules } from 'element-plus'
-import { getUsername, setUsername, setToken, setUserProfile } from '@/utils/auth'
-import { getMeInfo } from '@/api/user'
-import { saveEncryptedPassword, loadEncryptedPassword, clearEncryptedPassword } from '@/utils/auth'
-import { useFailedTip, useSuccessTip } from '@/utils/msgTip'
-import { createToken } from '@/api/auth'
-import type { LoginRequest } from '@/api/types'
-import { Box, Promotion, Setting } from '@element-plus/icons-vue'
-import { User, Lock } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import type { FormInstance, FormRules } from "element-plus";
+import {
+  getUsername,
+  setUsername,
+  setToken,
+  setUserProfile,
+} from "@/utils/auth";
+import { getMeInfo } from "@/api/user";
+import {
+  saveEncryptedPassword,
+  loadEncryptedPassword,
+  clearEncryptedPassword,
+} from "@/utils/auth";
+import { useFailedTip, useSuccessTip } from "@/utils/msgTip";
+import { createToken } from "@/api/auth";
+import type { LoginRequest } from "@/api/types";
+import { Box, Promotion, Setting } from "@element-plus/icons-vue";
+import { User, Lock } from "@element-plus/icons-vue";
 
-const router = useRouter()
-const route = useRoute()
-const loginFormRef = ref<FormInstance>()
-const loading = ref(false)
+const router = useRouter();
+const route = useRoute();
+const loginFormRef = ref<FormInstance>();
+const loading = ref(false);
 
 // 登录表单数据
 const loginForm = reactive<LoginRequest>({
-  username: '',
-  password: ''
-})
+  username: "",
+  password: "",
+});
 
 // 记住用户名选项
-const remember = ref(false)
-const rememberPassword = ref(false)
+const remember = ref(false);
+const rememberPassword = ref(false);
 
 // 可提交状态
 const canSubmit = computed(() => {
-  return loginForm.username.trim().length > 0 && loginForm.password.trim().length > 0
-})
+  return (
+    loginForm.username.trim().length > 0 && loginForm.password.trim().length > 0
+  );
+});
 
 // 表单验证规则
 const loginRules: FormRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
-}
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+};
 
 // 处理登录
 const handleLogin = async () => {
-  if (!loginFormRef.value) return
-  if (!canSubmit.value || loading.value) return
-  
+  if (!loginFormRef.value) return;
+  if (!canSubmit.value || loading.value) return;
+
   try {
-    await loginFormRef.value.validate()
-    loading.value = true
-    
+    await loginFormRef.value.validate();
+    loading.value = true;
+
     // 调用登录API
-    const tokenResp = await createToken({
+    const tokenResp = (await createToken({
       username: loginForm.username.trim(),
-      password: loginForm.password.trim()
-    }) as any
-    
+      password: loginForm.password.trim(),
+    })) as any;
+
     // 解析token字符串
     const token = tokenResp.data;
 
     // 登录成功，保存token
     if (token) {
-      setToken(token)
-      
+      setToken(token);
+
       // 记住用户名
       if (remember.value) {
-        setUsername(loginForm.username.trim())
+        setUsername(loginForm.username.trim());
       } else {
-        setUsername('')
+        setUsername("");
       }
 
       // 记住密码（加密存储）
       if (rememberPassword.value) {
-        await saveEncryptedPassword(loginForm.username.trim(), loginForm.password.trim())
+        await saveEncryptedPassword(
+          loginForm.username.trim(),
+          loginForm.password.trim()
+        );
       } else {
-        clearEncryptedPassword()
+        clearEncryptedPassword();
       }
-      
+
       // 获取并保存当前用户信息（完整对象）
       try {
-        const me = ((await getMeInfo()).data) as any
+        const me = (await getMeInfo()).data as any;
         if (me) {
-          setUserProfile(me)
+          setUserProfile(me);
         }
       } catch (e) {
         // 忽略获取用户信息失败
       }
 
-      useSuccessTip('登录成功')
-      
+      useSuccessTip("登录成功");
+
       // 跳转到目标页面或首页
-      const redirect = route.query.redirect as string
-      router.push(redirect || '/dashboard')
+      const redirect = route.query.redirect as string;
+      router.push(redirect || "/dashboard");
     } else {
-      useFailedTip('登录失败，请检查用户名和密码')
+      useFailedTip("登录失败，请检查用户名和密码");
     }
-    
   } catch (error: any) {
-    console.error('登录失败:', error)
-    useFailedTip(error?.msg || error?.message || '登录失败，请检查用户名和密码')
+    console.error("登录失败:", error);
+    useFailedTip(
+      error?.msg || error?.message || "登录失败，请检查用户名和密码"
+    );
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 返回首页
 const goToHome = () => {
-  router.push('/')
-}
+  router.push("/");
+};
 
 // 组件挂载时加载记住的用户名
 onMounted(async () => {
-  const savedUsername = getUsername()
+  const savedUsername = getUsername();
   if (savedUsername) {
-    loginForm.username = savedUsername
-    remember.value = true
+    loginForm.username = savedUsername;
+    remember.value = true;
   }
   // 尝试加载加密密码
   if (savedUsername) {
-    const savedPwd = await loadEncryptedPassword(savedUsername)
+    const savedPwd = await loadEncryptedPassword(savedUsername);
     if (savedPwd) {
-      loginForm.password = savedPwd
-      rememberPassword.value = true
+      loginForm.password = savedPwd;
+      rememberPassword.value = true;
     }
   }
-  initParticles()
-  window.addEventListener('resize', resizeCanvas)
-})
+  initParticles();
+  window.addEventListener("resize", resizeCanvas);
+});
 
 onBeforeUnmount(() => {
-  cancelAnimationFrame(animationId)
-  window.removeEventListener('resize', resizeCanvas)
-})
+  cancelAnimationFrame(animationId);
+  window.removeEventListener("resize", resizeCanvas);
+});
 
 // 粒子效果
-const particlesCanvas = ref<HTMLCanvasElement | null>(null)
-let ctx: CanvasRenderingContext2D | null = null
-let animationId = 0
+const particlesCanvas = ref<HTMLCanvasElement | null>(null);
+let ctx: CanvasRenderingContext2D | null = null;
+let animationId = 0;
 
-interface Particle { x: number; y: number; vx: number; vy: number; }
-let particles: Particle[] = []
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+}
+let particles: Particle[] = [];
 
 const resizeCanvas = () => {
-  if (!particlesCanvas.value) return
-  const dpr = window.devicePixelRatio || 1
-  const rect = particlesCanvas.value.getBoundingClientRect()
-  particlesCanvas.value.width = Math.floor(rect.width * dpr)
-  particlesCanvas.value.height = Math.floor(rect.height * dpr)
-  ctx = particlesCanvas.value.getContext('2d')
-  if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-}
+  if (!particlesCanvas.value) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = particlesCanvas.value.getBoundingClientRect();
+  particlesCanvas.value.width = Math.floor(rect.width * dpr);
+  particlesCanvas.value.height = Math.floor(rect.height * dpr);
+  ctx = particlesCanvas.value.getContext("2d");
+  if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+};
 
 const initParticles = () => {
-  if (!particlesCanvas.value) return
-  resizeCanvas()
-  const rect = particlesCanvas.value.getBoundingClientRect()
-  const area = rect.width * rect.height
-  const density = 0.00012 // 粒子密度（进一步降低）
-  const count = Math.max(14, Math.min(200, Math.floor(area * density)))
+  if (!particlesCanvas.value) return;
+  resizeCanvas();
+  const rect = particlesCanvas.value.getBoundingClientRect();
+  const area = rect.width * rect.height;
+  const density = 0.00012; // 粒子密度（进一步降低）
+  const count = Math.max(14, Math.min(200, Math.floor(area * density)));
   particles = Array.from({ length: count }).map(() => ({
     x: Math.random() * rect.width,
     y: Math.random() * rect.height,
     vx: (Math.random() - 0.5) * 0.6,
-    vy: (Math.random() - 0.5) * 0.6
-  }))
-  animate()
-}
+    vy: (Math.random() - 0.5) * 0.6,
+  }));
+  animate();
+};
 
 const draw = () => {
-  if (!ctx || !particlesCanvas.value) return
-  const { width, height } = particlesCanvas.value.getBoundingClientRect()
-  ctx.clearRect(0, 0, width, height)
+  if (!ctx || !particlesCanvas.value) return;
+  const { width, height } = particlesCanvas.value.getBoundingClientRect();
+  ctx.clearRect(0, 0, width, height);
 
   // 连线
-  const maxDist = 120
+  const maxDist = 120;
   for (let i = 0; i < particles.length; i++) {
     for (let j = i + 1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x
-      const dy = particles[i].y - particles[j].y
-      const dist = Math.hypot(dx, dy)
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.hypot(dx, dy);
       if (dist < maxDist) {
-        const alpha = 1 - dist / maxDist
-        ctx.strokeStyle = `rgba(64,158,255,${alpha * 0.8})`
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(particles[i].x, particles[i].y)
-        ctx.lineTo(particles[j].x, particles[j].y)
-        ctx.stroke()
+        const alpha = 1 - dist / maxDist;
+        ctx.strokeStyle = `rgba(64,158,255,${alpha * 0.8})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
       }
     }
   }
 
   // 粒子
   for (const p of particles) {
-    ctx.fillStyle = 'rgba(64,158,255,0.9)'
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
-    ctx.fill()
+    ctx.fillStyle = "rgba(64,158,255,0.9)";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+    ctx.fill();
   }
-}
+};
 
 const animate = () => {
-  const { width, height } = particlesCanvas.value!.getBoundingClientRect()
+  const { width, height } = particlesCanvas.value!.getBoundingClientRect();
   for (const p of particles) {
-    p.x += p.vx
-    p.y += p.vy
-    if (p.x < 0 || p.x > width) p.vx *= -1
-    if (p.y < 0 || p.y > height) p.vy *= -1
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < 0 || p.x > width) p.vx *= -1;
+    if (p.y < 0 || p.y > height) p.vy *= -1;
   }
-  draw()
-  animationId = requestAnimationFrame(animate)
-}
+  draw();
+  animationId = requestAnimationFrame(animate);
+};
 </script>
 
 <style scoped>
@@ -313,9 +341,17 @@ const animate = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(1200px 600px at 10% 10%, rgba(64, 158, 255, 0.12), transparent),
-              radial-gradient(800px 400px at 90% 80%, rgba(103, 194, 58, 0.12), transparent),
-              linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+  background: radial-gradient(
+      1200px 600px at 10% 10%,
+      rgba(64, 158, 255, 0.12),
+      transparent
+    ),
+    radial-gradient(
+      800px 400px at 90% 80%,
+      rgba(103, 194, 58, 0.12),
+      transparent
+    ),
+    linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   position: relative;
 }
 
@@ -410,13 +446,18 @@ const animate = () => {
 }
 
 .brand-highlights a::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.1), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(64, 158, 255, 0.1),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -504,4 +545,4 @@ const animate = () => {
     height: 100vh;
   }
 }
-</style> 
+</style>
