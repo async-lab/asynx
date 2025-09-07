@@ -3,8 +3,12 @@ package security
 import (
 	"github.com/dsx137/gg-gin/pkg/gggin"
 	"github.com/gin-gonic/gin"
-
 )
+
+type GuardResult struct {
+	Uid  string
+	Role Role
+}
 
 func Guard(c *gin.Context, role Role) (string, Role, *gggin.HttpError) {
 	authHeader := c.GetHeader("Authorization")
@@ -26,4 +30,18 @@ func Guard(c *gin.Context, role Role) (string, Role, *gggin.HttpError) {
 	}
 
 	return claims.Uid, claims.Role, nil
+}
+
+func GuardMiddleware(role Role) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid, role, err := Guard(c, role)
+		if err != nil {
+			c.JSON(err.StatusCode, err.Message)
+			c.Abort()
+			return
+		}
+
+		c.Set("guard", &GuardResult{Uid: uid, Role: role})
+		c.Next()
+	}
 }

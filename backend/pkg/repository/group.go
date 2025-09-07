@@ -59,6 +59,11 @@ func (r *RepositoryGroup) find(rdn string, filter string) ([]*entity.Group, erro
 	return groups, nil
 }
 
+func (r *RepositoryGroup) FindAllByOu(ou string) ([]*entity.Group, error) {
+	group, err := r.find(fmt.Sprintf("ou=%s", ou), "objectClass=*")
+	return group, err
+}
+
 func (r *RepositoryGroup) FindByOuAndCn(ou string, cn string) (group *entity.Group, err error) {
 	groups, err := r.find(fmt.Sprintf("ou=%s", ou), fmt.Sprintf("cn=%s", cn))
 	if len(groups) != 0 {

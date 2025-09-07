@@ -7,7 +7,6 @@ import (
 	"asynclab.club/asynx/backend/pkg/repository"
 	"asynclab.club/asynx/backend/pkg/security"
 	"github.com/sirupsen/logrus"
-
 )
 
 type ServiceGroup struct {
@@ -20,12 +19,23 @@ func NewServiceGroup(repo *repository.RepositoryGroup) *ServiceGroup {
 	}
 }
 
-func (r *ServiceGroup) FindByOuAndCn(ou security.OuGroup, cn string) (group *entity.Group, err error) {
-	return r.repositoryGroup.FindByOuAndCn(ou.String(), cn)
+func (r *ServiceGroup) FindByOuAndCn(ou security.OuGroup, cn string) (*entity.Group, error) {
+	group, err := r.repositoryGroup.FindByOuAndCn(ou.String(), cn)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil {
+		return nil, ErrNotFound
+	}
+	return group, nil
 }
 
 func (s *ServiceGroup) FindAll() ([]*entity.Group, error) {
 	return s.repositoryGroup.FindAll()
+}
+
+func (s *ServiceGroup) FindAllByOu(ou security.OuGroup) ([]*entity.Group, error) {
+	return s.repositoryGroup.FindAllByOu(ou.String())
 }
 
 func (s *ServiceGroup) FindAllByOuAndMemberUid(ou security.OuGroup, uid string) ([]*entity.Group, error) {
@@ -41,11 +51,28 @@ func (s *ServiceGroup) GetRoleByUid(uid string) (security.Role, error) {
 	if len(groups) == 0 {
 		return security.RoleAnonymous, nil
 	}
-	return security.GetRoleFromLdapGroups(groups)
+	role, err := security.GetRoleFromLdapGroups(groups)
+	if err != nil {
+		return security.RoleAnonymous, fmt.Errorf("error getting role for user %s: %w", uid, err)
+	}
+	return role, nil
 }
 
 func (s *ServiceGroup) GetRole(user *entity.User) (security.Role, error) {
 	return s.GetRoleByUid(user.Uid)
+}
+
+func (s *ServiceGroup) RevokeRoleByUid(uid string) error {
+	attr := map[string][]string{"memberUid": {uid}}
+
+	roleGroups, err := s.FindAllByOu(security.OuGroupSupplementary)
+	if err != nil {
+		return err
+	}
+	for _, group := range roleGroups {
+		return s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(group), nil, attr, nil)
+	}
+	return nil
 }
 
 func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
@@ -64,11 +91,9 @@ func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 	// 如果新角色是匿名（移除所有角色）
 	if newRole == security.RoleAnonymous {
 		if oldRole != security.RoleAnonymous {
-			oldGroup, err := s.FindByOuAndCn(security.OuGroupSupplementary, oldRole.String())
-			if err != nil {
+			if err := s.RevokeRoleByUid(uid); err != nil {
 				return err
 			}
-			return s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil)
 		}
 		return nil
 	}
@@ -89,16 +114,21 @@ func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 
 	// 如果是角色切换：先从旧组移除，再添加到新组
 	oldGroup, err := s.FindByOuAndCn(security.OuGroupSupplementary, oldRole.String())
-	if err != nil {
+	if err != nil && err != ErrNotFound {
 		return err
 	}
-	if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil); err != nil {
-		return err
+	oldNotFound := err == ErrNotFound
+	if !oldNotFound {
+		if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil); err != nil {
+			return err
+		}
 	}
 	if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(newGroup), attr, nil, nil); err != nil {
 		// 回滚
-		if err = s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), attr, nil, nil); err != nil {
-			logrus.Warningf("Failed to rollback group modification when grant role: %v", err)
+		if !oldNotFound {
+			if err = s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), attr, nil, nil); err != nil {
+				logrus.Warningf("Failed to rollback group modification when grant role: %v", err)
+			}
 		}
 		return err
 	}

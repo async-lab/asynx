@@ -125,7 +125,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "获取所有用户列表信息。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。",
+                "description": "获取所有用户列表信息（包含角色和类别）。需要 ADMIN 角色权限才能查看所有用户，DEFAULT 用户只能查看自己组织单元的用户。",
                 "consumes": [
                     "application/json"
                 ],
@@ -145,7 +145,7 @@ const docTemplate = `{
                                 "data": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/definitions/entity.User"
+                                        "$ref": "#/definitions/service.UserProfile"
                                     }
                                 }
                             }
@@ -291,7 +291,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "根据用户ID获取用户详细信息。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。",
+                "description": "根据用户ID获取用户详细信息（包含角色和类别）。需要 RESTRICTED 或更高权限。ADMIN 用户可以查看所有用户信息，DEFAULT 用户只能查看自己组织单元的用户信息，RESTRICTED 用户只能查看自己的信息。",
                 "consumes": [
                     "application/json"
                 ],
@@ -318,7 +318,7 @@ const docTemplate = `{
                             "type": "object",
                             "properties": {
                                 "data": {
-                                    "$ref": "#/definitions/entity.User"
+                                    "$ref": "#/definitions/service.UserProfile"
                                 }
                             }
                         }
@@ -494,6 +494,7 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "获取账号类型",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -801,6 +802,7 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "获取账号角色",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -1054,14 +1056,50 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.User": {
+        "security.OuUser": {
+            "type": "string",
+            "enum": [
+                "system",
+                "member",
+                "external",
+                "unknown"
+            ],
+            "x-enum-varnames": [
+                "OuUserSystem",
+                "OuUserMember",
+                "OuUserExternal",
+                "OuUserUnknown"
+            ]
+        },
+        "security.Role": {
+            "type": "string",
+            "enum": [
+                "admin",
+                "default",
+                "restricted",
+                "anonymous"
+            ],
+            "x-enum-varnames": [
+                "RoleAdmin",
+                "RoleDefault",
+                "RoleRestricted",
+                "RoleAnonymous"
+            ]
+        },
+        "service.UserProfile": {
             "type": "object",
             "properties": {
+                "category": {
+                    "$ref": "#/definitions/security.OuUser"
+                },
                 "givenName": {
                     "type": "string"
                 },
                 "mail": {
                     "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/security.Role"
                 },
                 "surName": {
                     "type": "string"
@@ -1087,7 +1125,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
 	BasePath:         "/api",
-	Schemes:          []string{"http", "https"},
+	Schemes:          []string{},
 	Title:            "Asynx API 文档",
 	Description:      "Asynx API 接口文档",
 	InfoInstanceName: "swagger",

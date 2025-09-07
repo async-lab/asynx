@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"errors"
 	"net/http"
 
 	"asynclab.club/asynx/backend/pkg/service"
@@ -15,7 +14,7 @@ type ControllerToken struct {
 
 func NewControllerTokens(g *gin.RouterGroup, serviceManager *service.ServiceManager) *ControllerToken {
 	ctl := &ControllerToken{serviceManager: serviceManager}
-	g.POST("", gggin.HandleController(ctl.HandleCreate))
+	g.POST("", gggin.ToGinHandler(ctl.HandleCreate))
 	return ctl
 }
 
@@ -43,12 +42,7 @@ func (ctl *ControllerToken) HandleCreate(c *gin.Context) (*gggin.Response[string
 
 	token, err := ctl.serviceManager.Authenticate(req.Username, req.Password)
 	if err != nil {
-		var httpErr *gggin.HttpError
-		if errors.As(err, &httpErr) {
-			return nil, httpErr
-		}
-		return nil, gggin.NewHttpError(http.StatusInternalServerError, err.Error())
+		return nil, service.MapErrorToHttp(err)
 	}
-
 	return gggin.NewResponse(token), nil
 }
