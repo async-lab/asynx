@@ -18,6 +18,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
+      - name: Build Frontend
+        run: |
+          cd frontend
+          corepack enable
+          pnpm install
+          pnpm run build
+
       - name: Build And Publish
         run: |
           PREFIX=ghcr.io/${{ github.repository }}

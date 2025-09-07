@@ -19,6 +19,18 @@ runs:
       with:
         go-version: "stable"
 
+    # Setup Pnpm
+    - uses: pnpm/action-setup@v2
+      with:
+        version: latest
+
+    # Setup Node
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+        cache: "pnpm"
+        cache-dependency-path: '**/pnpm-lock.yaml'
+
     # Setup ko
     - uses: ko-build/setup-ko@v0.9
 
