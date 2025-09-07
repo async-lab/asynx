@@ -9,15 +9,10 @@ import (
 )
 
 var (
-	ErrNotFound        = errors.New("not found")
-	ErrExists          = errors.New("already exists")
-	ErrInvalidEmail    = errors.New("invalid email format")
-	ErrInvalidRole     = errors.New("invalid role")
-	ErrInvalidOu       = errors.New("invalid organizational unit")
-	ErrInvalidCreds    = errors.New("invalid credentials")
-	ErrConflict        = errors.New("conflict")
-	ErrIllegalPassword = errors.New("illegal password")
-	ErrWeakPassword    = errors.New("weak password")
+	ErrNotFound     = errors.New("not found")
+	ErrExists       = errors.New("already exists")
+	ErrInvalid      = errors.New("invalid objet")
+	ErrWeakPassword = errors.New("weak password")
 )
 
 type ServiceError struct {
@@ -25,11 +20,13 @@ type ServiceError struct {
 	Message string
 }
 
-func NewError(err error, message string) *ServiceError {
+func WrapError(err error, message string) *ServiceError {
 	return &ServiceError{Err: err, Message: message}
 }
 
 func (e *ServiceError) Error() string { return e.Message }
+
+func (e *ServiceError) Unwrap() error { return e.Err }
 
 func MapErrorToHttp(err error) *gggin.HttpError {
 	switch {
@@ -37,16 +34,8 @@ func MapErrorToHttp(err error) *gggin.HttpError {
 		return gggin.NewHttpError(http.StatusNotFound, fmt.Sprintf("对象不存在: %s", err.Error()))
 	case errors.Is(err, ErrExists):
 		return gggin.NewHttpError(http.StatusConflict, fmt.Sprintf("对象已存在: %s", err.Error()))
-	case errors.Is(err, ErrInvalidEmail):
-		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("邮箱格式不合法: %s", err.Error()))
-	case errors.Is(err, ErrInvalidOu):
-		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("账号类型不合法: %s", err.Error()))
-	case errors.Is(err, ErrInvalidRole):
-		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("角色不合法: %s", err.Error()))
-	case errors.Is(err, ErrInvalidCreds):
-		return gggin.NewHttpError(http.StatusUnauthorized, fmt.Sprintf("无效的凭证: %s", err.Error()))
-	case errors.Is(err, ErrIllegalPassword):
-		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("密码不符合要求: %s", err.Error()))
+	case errors.Is(err, ErrInvalid):
+		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("无效的对象: %s", err.Error()))
 	case errors.Is(err, ErrWeakPassword):
 		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("密码强度不够: %s", err.Error()))
 	default:

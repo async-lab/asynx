@@ -41,7 +41,7 @@ func (s *ServiceManager) Authenticate(username, password string) (string, error)
 		return "", err
 	}
 	if !ok {
-		return "", ErrInvalidCreds
+		return "", WrapError(ErrInvalid, fmt.Sprintf("Invalid credentials"))
 	}
 
 	role, err := s.serviceGroup.GetRoleByUid(username)
@@ -59,22 +59,22 @@ func (s *ServiceManager) Authenticate(username, password string) (string, error)
 func (s *ServiceManager) Register(username, surName, givenName, mail, category, roleName string) error {
 	ou, err := security.GetOuUserFromName(category)
 	if err != nil {
-		return ErrInvalidOu
+		return WrapError(ErrInvalid, err.Error())
 	}
 
 	if ou != security.OuUserSystem {
 		if err := security.ValidateMemberUsernameLegality(username); err != nil {
-			return fmt.Errorf("%w: %s", ErrConflict, err.Error())
+			return WrapError(ErrInvalid, err.Error())
 		}
 	}
 
 	role, err := security.GetRoleFromName(roleName)
 	if err != nil {
-		return ErrInvalidRole
+		return WrapError(ErrInvalid, err.Error())
 	}
 
 	if err := security.ValidateEmailFormat(mail); err != nil {
-		return ErrInvalidEmail
+		return WrapError(ErrInvalid, err.Error())
 	}
 
 	_, err = s.serviceUser.FindByUid(username)
@@ -167,7 +167,7 @@ func (s *ServiceManager) GrantRoleByUidAndRoleName(uid string, roleName string) 
 
 	role, err := security.GetRoleFromName(roleName)
 	if err != nil {
-		return ErrInvalidRole
+		return WrapError(ErrInvalid, err.Error())
 	}
 
 	err = s.serviceGroup.GrantRole(user, role)
@@ -321,7 +321,7 @@ func (s *ServiceManager) ChangePassword(uid string, password string) error {
 	}
 
 	if err := security.ValidatePasswordLegality(password); err != nil {
-		return ErrIllegalPassword
+		return WrapError(ErrInvalid, err.Error())
 	}
 	if err := security.ValidatePasswordStrength(password); err != nil {
 		return ErrWeakPassword
@@ -340,7 +340,7 @@ func (s *ServiceManager) ModifyCategory(uid string, category string) error {
 
 	ou, err := security.GetOuUserFromName(category)
 	if err != nil {
-		return ErrInvalidOu
+		return WrapError(ErrInvalid, err.Error())
 	}
 
 	err = s.serviceUser.ModifyOu(user, ou)
