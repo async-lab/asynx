@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var LegalChars = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+[]{}|;:,.<>?/`~'"
+var LegalChars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+[]{}|;:,.<>?/`~'"
 
 func ValidatePasswordLegality(password string) error {
 	if len(password) > 64 {
