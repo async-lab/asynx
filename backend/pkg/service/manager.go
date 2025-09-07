@@ -324,7 +324,7 @@ func (s *ServiceManager) ChangePassword(uid string, password string) error {
 		return WrapError(ErrInvalid, err.Error())
 	}
 	if err := security.ValidatePasswordStrength(password); err != nil {
-		return ErrWeakPassword
+		return WrapError(ErrInvalid, err.Error())
 	}
 	if err := s.serviceUser.ModifyPassword(user, password); err != nil {
 		return err

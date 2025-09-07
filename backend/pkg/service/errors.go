@@ -9,10 +9,9 @@ import (
 )
 
 var (
-	ErrNotFound     = errors.New("not found")
-	ErrExists       = errors.New("already exists")
-	ErrInvalid      = errors.New("invalid objet")
-	ErrWeakPassword = errors.New("weak password")
+	ErrNotFound = errors.New("not found")
+	ErrExists   = errors.New("already exists")
+	ErrInvalid  = errors.New("invalid objet")
 )
 
 type ServiceError struct {
@@ -36,8 +35,6 @@ func MapErrorToHttp(err error) *gggin.HttpError {
 		return gggin.NewHttpError(http.StatusConflict, fmt.Sprintf("对象已存在: %s", err.Error()))
 	case errors.Is(err, ErrInvalid):
 		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("无效的对象: %s", err.Error()))
-	case errors.Is(err, ErrWeakPassword):
-		return gggin.NewHttpError(http.StatusBadRequest, fmt.Sprintf("密码强度不够: %s", err.Error()))
 	default:
 		return gggin.NewHttpError(http.StatusInternalServerError, err.Error())
 	}
