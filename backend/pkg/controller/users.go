@@ -160,8 +160,8 @@ func (ctl *ControllerUser) HandleModifyCategory(c *gin.Context) (*gggin.Response
 	}
 
 	uid := c.Param("uid")
-	if uid == "me" || uid == guard.Uid {
-		return nil, ErrHttpForceForbidden
+	if uid == "me" {
+		uid = guard.Uid
 	}
 
 	req, err := gggin.ShouldBindJSON[RequestModifyCategory](c)
@@ -182,7 +182,7 @@ type RequestModifyRole struct {
 }
 
 // @Summary      更改账号角色
-// @Description  修改指定用户的账号角色。需要 ADMIN 角色权限。非SYSTEM用户必须用学号作为用户名。
+// @Description  修改指定用户的账号角色。需要 ADMIN 角色权限。非SYSTEM用户必须用学号作为用户名。不允许操作当前登录用户。
 // @Tags         users
 // @Accept       json
 // @Produce      json

@@ -647,7 +647,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: 修改指定用户的账号角色。需要 ADMIN 角色权限。非SYSTEM用户必须用学号作为用户名。
+      description: 修改指定用户的账号角色。需要 ADMIN 角色权限。非SYSTEM用户必须用学号作为用户名。不允许操作当前登录用户。
       parameters:
       - description: 用户ID，不能使用 'me'
         in: path
