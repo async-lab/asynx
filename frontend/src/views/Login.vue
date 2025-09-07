@@ -6,7 +6,7 @@
         <div class="card-body">
           <div class="brand-pane">
             <div class="brand-header">
-              <img class="brand-logo" src="/async0.svg" alt="AsyncLab" />
+              <img class="brand-logo" src="../assets/async1.png" alt="AsyncLab" />
               <h2>AsyncLab</h2>
               <p>欢迎每一个热爱开发的人</p>
             </div>
