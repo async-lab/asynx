@@ -71,11 +71,12 @@ func (s *ServiceGroup) RevokeRoleByUid(uid string) error {
 		return err
 	}
 	for _, group := range roleGroups {
-		return s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(group), nil, attr, nil)
+		return s.repositoryGroup.ModifyAttributes(s.repositoryGroup.BuildDn(group), nil, attr, nil)
 	}
 	return nil
 }
 
+// WARN: 千万不要用replaceAttrs在多值属性上，否则会清空其他不相干值
 func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 	oldRole, err := s.GetRoleByUid(uid)
 	if err != nil {
@@ -110,7 +111,7 @@ func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 
 	// 如果用户之前没有角色（直接添加）
 	if oldRole == security.RoleAnonymous {
-		return s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(newGroup), attr, nil, nil) // 添加用户
+		return s.repositoryGroup.ModifyAttributes(s.repositoryGroup.BuildDn(newGroup), attr, nil, nil) // 添加用户
 	}
 
 	// 如果是角色切换：先从旧组移除，再添加到新组
@@ -121,14 +122,14 @@ func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 	}
 
 	if !oldNotFound {
-		if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil); err != nil {
+		if err := s.repositoryGroup.ModifyAttributes(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil); err != nil {
 			return err
 		}
 	}
-	if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(newGroup), attr, nil, nil); err != nil {
+	if err := s.repositoryGroup.ModifyAttributes(s.repositoryGroup.BuildDn(newGroup), attr, nil, nil); err != nil {
 		// 回滚
 		if !oldNotFound {
-			if err = s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), attr, nil, nil); err != nil {
+			if err = s.repositoryGroup.ModifyAttributes(s.repositoryGroup.BuildDn(oldGroup), attr, nil, nil); err != nil {
 				logrus.Warningf("Failed to rollback group modification when grant role: %v", err)
 			}
 		}

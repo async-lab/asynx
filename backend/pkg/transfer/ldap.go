@@ -148,10 +148,10 @@ func ParseToLdapAttributes[T any](item *T) (map[string][]string, error) {
 			continue
 		}
 
-		isDnField, isTransient, attrName, _, _ := parseTag(ldapTag)
+		isDnField, isTransient, attrName, dnAttr, _ := parseTag(ldapTag)
 
-		// 跳过 transient 字段和 DN 字段（DN字段通常在创建条目时单独处理
-		if isTransient || isDnField {
+		// 跳过 transient、DN、dnAttr
+		if isTransient || isDnField || dnAttr != "" {
 			continue
 		}
 

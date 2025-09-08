@@ -11,4 +11,5 @@ type User struct {
 	HomeDirectory string `ldap:"homeDirectory" json:"homeDirectory"`
 	Mail          string `ldap:"mail" json:"mail"`
 	UserPassword  string `ldap:"userPassword" json:"userPassword"`
+	LoginShell    string `ldap:"loginShell" json:"loginShell"`
 }

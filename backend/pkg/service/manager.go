@@ -104,6 +104,7 @@ func (s *ServiceManager) Register(username, surName, givenName, mail, category, 
 		HomeDirectory: fmt.Sprintf("/home/%s", username),
 		Mail:          mail,
 		UserPassword:  password,
+		LoginShell:    "/bin/bash",
 	}
 
 	if err := s.serviceUser.Create(user); err != nil {

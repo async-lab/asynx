@@ -54,10 +54,6 @@ func (s *ServiceUser) Create(user *entity.User) error {
 	return s.repositoryUser.Create(user)
 }
 
-func (s *ServiceUser) Modify(user *entity.User) error {
-	return s.repositoryUser.Modify(user)
-}
-
 func (s *ServiceUser) ModifyPassword(user *entity.User, newPassword string) error {
 	return s.repositoryUser.ModifyPassword(user, newPassword)
 }
