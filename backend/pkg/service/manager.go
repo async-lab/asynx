@@ -150,9 +150,6 @@ func (s *ServiceManager) unregister(user *entity.User) error {
 func (s *ServiceManager) Unregister(uid string) error {
 	user, err := s.serviceUser.FindByUid(uid)
 	if err != nil {
-		if !errors.Is(err, ErrNotFound) {
-			return err
-		}
 		return err
 	}
 

@@ -115,10 +115,11 @@ func (s *ServiceGroup) GrantRoleByUid(uid string, newRole security.Role) error {
 
 	// 如果是角色切换：先从旧组移除，再添加到新组
 	oldGroup, err := s.FindByOuAndCn(security.OuGroupSupplementary, oldRole.String())
-	if !errors.Is(err, ErrNotFound) {
+	oldNotFound := errors.Is(err, ErrNotFound)
+	if err != nil && !oldNotFound {
 		return err
 	}
-	oldNotFound := errors.Is(err, ErrNotFound)
+
 	if !oldNotFound {
 		if err := s.repositoryGroup.Modify(s.repositoryGroup.BuildDn(oldGroup), nil, attr, nil); err != nil {
 			return err
