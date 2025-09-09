@@ -187,6 +187,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .home-hero {
   width: 98%;
+  margin-right: 1%;
   display: flex;
   flex-direction: column;
   gap: 18px;

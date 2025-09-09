@@ -154,7 +154,6 @@ const animate = () => {
 <style scoped>
 .not-found {
   min-height: 100vh;
-  min-width: 800px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -179,7 +178,6 @@ const animate = () => {
 .not-found-content {
   text-align: center;
   max-width: 600px;
-  min-width: 400px;
   margin-right: 60px;
   min-height: 400px;
 }
@@ -250,11 +248,13 @@ const animate = () => {
   .not-found {
     flex-direction: column;
     text-align: center;
+    padding: 16px;
   }
   
   .not-found-content {
     margin-right: 0;
     margin-bottom: 40px;
+    padding: 0 8px;
   }
   
   .error-code {

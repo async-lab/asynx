@@ -9,7 +9,7 @@
 
       <div class="welcome-content">
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :xs="24" :sm="24" :md="12">
             <div class="welcome-text">
               <h2>异步开发实验室</h2>
               <div>
@@ -24,7 +24,7 @@
               </div>
             </div>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :sm="24" :md="12">
             <div class="welcome-actions">
               <img
                 class="brand-logo"
