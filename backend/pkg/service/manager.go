@@ -104,6 +104,7 @@ func (s *ServiceManager) Register(username, surName, givenName, mail, category, 
 		HomeDirectory: fmt.Sprintf("/home/%s", username),
 		Mail:          mail,
 		UserPassword:  password,
+		LoginShell:    "/bin/bash",
 	}
 
 	if err := s.serviceUser.Create(user); err != nil {
@@ -150,9 +151,6 @@ func (s *ServiceManager) unregister(user *entity.User) error {
 func (s *ServiceManager) Unregister(uid string) error {
 	user, err := s.serviceUser.FindByUid(uid)
 	if err != nil {
-		if !errors.Is(err, ErrNotFound) {
-			return err
-		}
 		return err
 	}
 

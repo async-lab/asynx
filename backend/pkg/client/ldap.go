@@ -149,7 +149,7 @@ func (c *LdapClient) Add(dn string, objectClass []string, attributes map[string]
 	})
 }
 
-func (c *LdapClient) Modify(dn string, addAttrs, delAttrs, replaceAttrs map[string][]string) error {
+func (c *LdapClient) ModifyAttributes(dn string, addAttrs, delAttrs, replaceAttrs map[string][]string) error {
 	return c.withConnection(func(conn *ldap.Conn) error {
 		modifyReq := ldap.NewModifyRequest(dn, nil)
 		for attr, values := range addAttrs {

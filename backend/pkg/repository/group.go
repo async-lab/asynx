@@ -80,6 +80,6 @@ func (r *RepositoryGroup) FindAllByOuAndMemberUid(ou string, uid string) ([]*ent
 	return r.find(fmt.Sprintf("ou=%s", ou), fmt.Sprintf("memberUid=%s", uid))
 }
 
-func (r *RepositoryGroup) Modify(dn string, addAttrs map[string][]string, delAttrs map[string][]string, replaceAttrs map[string][]string) error {
-	return r.client.Modify(dn, addAttrs, delAttrs, replaceAttrs)
+func (r *RepositoryGroup) ModifyAttributes(dn string, addAttrs map[string][]string, delAttrs map[string][]string, replaceAttrs map[string][]string) error {
+	return r.client.ModifyAttributes(dn, addAttrs, delAttrs, replaceAttrs)
 }

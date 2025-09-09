@@ -7,6 +7,8 @@ import (
 	"asynclab.club/asynx/backend/pkg/config"
 	"asynclab.club/asynx/backend/pkg/entity"
 	"asynclab.club/asynx/backend/pkg/transfer"
+
+
 )
 
 type RepositoryUser struct {
@@ -92,13 +94,13 @@ func (r *RepositoryUser) Create(user *entity.User) error {
 	return r.client.Add(r.BuildDn(user), config.UserObjectClasses, attributes)
 }
 
-func (r *RepositoryUser) Modify(user *entity.User) error {
+func (r *RepositoryUser) ModifyAttributes(user *entity.User) error {
 	attributes, err := transfer.ParseToLdapAttributes(user)
 	if err != nil {
 		return err
 	}
 
-	return r.client.Modify(r.BuildDn(user), nil, nil, attributes)
+	return r.client.ModifyAttributes(r.BuildDn(user), nil, nil, attributes)
 }
 
 func (r *RepositoryUser) ModifyDn(user *entity.User, newRDN, newSuperior string) error {
