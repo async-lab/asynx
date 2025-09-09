@@ -15,6 +15,7 @@
             <el-dropdown-menu>
               <el-dropdown-item command="profile">设置</el-dropdown-item>
               <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+              <el-dropdown-item divided command="OIDC">OIDC设置</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -126,6 +127,9 @@ const handleCommand = async (command: string) => {
       break
     case 'logout':
       await handleLogout()
+      break
+    case 'OIDC':
+      window.open('https://keycloak.internal.asynclab.club/realms/asynclab/account  ', '_blank')
       break
   }
 }
