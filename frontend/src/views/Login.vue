@@ -337,7 +337,6 @@ const animate = () => {
 <style scoped>
 .login-container {
   height: 100vh;
-  min-width: 800px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -370,7 +369,6 @@ const animate = () => {
 .login-box {
   width: 100%;
   max-width: 900px;
-  min-width: 800px;
   position: relative;
   z-index: 1;
 }
@@ -532,7 +530,6 @@ const animate = () => {
 @media (max-width: 1024px) {
   .login-box {
     max-width: 720px;
-    min-width: 680px;
   }
   .card-body {
     grid-template-columns: 1fr;
@@ -543,6 +540,19 @@ const animate = () => {
   .particles-canvas {
     width: 100vw;
     height: 100vh;
+  }
+}
+
+/* 更小屏幕的自适应（手机） */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 16px;
+  }
+  .login-box {
+    max-width: 520px;
+  }
+  .form-pane {
+    padding: 24px 20px;
   }
 }
 </style>

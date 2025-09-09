@@ -14,13 +14,31 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile">设置</el-dropdown-item>
-              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
               <el-dropdown-item divided command="OIDC">OIDC设置</el-dropdown-item>
+              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
       </div>
     </el-header>
+
+    <!-- 移动端顶部导航（<= 992px 显示） -->
+    <div class="mobile-nav">
+      <el-menu
+        mode="horizontal"
+        :default-active="activeMenu"
+        @select="handleMenuSelect"
+      >
+        <el-menu-item index="overview">
+          <el-icon><House /></el-icon>
+          <span>概览</span>
+        </el-menu-item>
+        <el-menu-item index="users" v-if="!isRestricted">
+          <el-icon><User /></el-icon>
+          <span>用户管理</span>
+        </el-menu-item>
+      </el-menu>
+    </div>
 
     <!-- 主要内容区域 -->
     <el-container class="dashboard-container">
@@ -277,12 +295,22 @@ watchEffect(() => {
 
 @media (max-width: 992px) {
   .dashboard-container { display: block; }
-  .dashboard-sidebar { width: 100%; min-width: auto; border-right: none; border-bottom: 1px solid #e4e7ed; }
+  .dashboard-sidebar { display: none; }
 }
 
 @media (max-width: 768px) {
   .dashboard-header { min-height: 56px; }
   .dashboard-main { padding: 10px; }
+}
+
+.mobile-nav {
+  display: none;
+  background: #fff;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+@media (max-width: 992px) {
+  .mobile-nav { display: block; }
 }
 
 /* 概览为空白占位，不添加多余内容 */
