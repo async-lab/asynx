@@ -270,3 +270,78 @@ const animate = () => {
   }
 }
 </style> 
+<style>
+/* 暗色模式：404 页切换为星空背景并隐藏粒子 */
+html.dark .not-found {
+  background:
+    radial-gradient(900px 600px at 22% 28%, rgba(56, 189, 248, 0.14), transparent 60%),
+    radial-gradient(1000px 700px at 74% 70%, rgba(168, 85, 247, 0.12), transparent 60%),
+    radial-gradient(800px 500px at 46% 84%, rgba(59, 130, 246, 0.10), transparent 60%),
+    linear-gradient(135deg, #0b0f14 0%, #0f1720 100%);
+  animation: nf-space-drift 45s linear infinite;
+}
+html.dark .particles-canvas { display: none; }
+html.dark .not-found::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 72%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 64% 28%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 84% 64%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1px 1px at 18% 86%, rgba(255,255,255,0.88) 50%, transparent 51%),
+    radial-gradient(1px 1px at 52% 54%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 44%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 40%, rgba(255,255,255,0.92) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 20%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 24% 58%, rgba(255,255,255,0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 36% 42%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 58% 78%, rgba(255,255,255,0.92) 50%, transparent 51%);
+  animation: nf-twinkle 2.0s infinite ease-in-out, nf-drift-1 70s linear infinite;
+}
+
+@keyframes nf-twinkle {
+  0%, 100% { opacity: 0.16; }
+  50% { opacity: 1; }
+}
+@keyframes nf-drift-1 {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 90px 70px, -70px 50px, 120px -50px, -90px -70px, 50px -90px, -120px 110px, 70px -70px, -50px 90px, 130px 30px, -130px -30px, 100px -100px, -100px 100px; }
+}
+
+/* 第二层大星点 */
+html.dark .not-found::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1.5px 1.5px at 18% 24%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 46% 16%, rgba(255,255,255,0.92) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 76% 52%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 30% 82%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 88% 76%, rgba(255,255,255,1) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 24% 36%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 68% 68%, rgba(255,255,255,0.98) 50%, transparent 51%);
+  animation: nf-twinkle2 2.6s infinite ease-in-out alternate, nf-drift-2 100s linear infinite;
+}
+
+@keyframes nf-twinkle2 {
+  0% { opacity: 0.12; }
+  60% { opacity: 1; }
+  100% { opacity: 0.28; }
+}
+@keyframes nf-drift-2 {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: -130px 90px, 110px -70px, -90px -120px, 70px 130px, -150px 50px, 100px -100px, -70px 70px; }
+}
+
+@keyframes nf-space-drift {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 40px 60px, -60px 40px, 30px -30px, 0 0; }
+}
+</style>

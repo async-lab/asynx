@@ -17,7 +17,7 @@
       </div>
     </el-card>
 
-    <el-card class="password-card" style="margin-top: 16px;">
+    <el-card class="password-card" style="margin-top: 16px;background-color: #fff;">
       <template #header>
         <div class="card-header">
           <h3>修改密码</h3>
@@ -176,6 +176,44 @@ const goDashboard = () => {
 .info-value {
   color: #303133;
   font-weight: 500;
+}
+
+/* 暗色模式下进一步提升对比度（已在全局覆盖，这里微调） */
+html.dark .profile-page .info-list .info-item {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+html.dark .profile-page .info-label { color: var(--el-text-color-secondary); }
+html.dark .profile-page .info-value { color: var(--el-text-color-primary); }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .profile-wrapper {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 0 12px;
+  }
+  .info-item {
+    padding: 12px;
+    gap: 10px;
+  }
+  .info-label { font-size: 14px; }
+  .info-value { font-size: 14px; }
+}
+/* 暗色模式覆盖：Profile 信息项背景与文字 */
+html.dark .info-item {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  box-shadow: none;
+}
+html.dark .info-label { color: var(--el-text-color-regular); }
+html.dark .info-value { color: var(--el-text-color-primary); }
+</style>
+<style>
+/* 明暗模式下的密码卡片背景适配（默认白天为白色，暗色为卡片底） */
+html.dark .password-card {
+  background: var(--card-bg) !important;
 }
 </style>
 

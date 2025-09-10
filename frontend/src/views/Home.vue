@@ -82,11 +82,13 @@
               年的历史了，所以会有很多已经毕业工作的学长给还在学校的我们提供很多帮助，比如互联网大厂内推、业界一线的情况等等。
             </p>
           </div>
-          <img
-            class="join-poster"
-            src="../assets/海报.png"
-            alt="AsyncLab 加入我们"
-          />
+          <a href="https://qm.qq.com/q/VH7ZvutBiQ" target="_blank" rel="noopener">
+            <img
+              class="join-poster"
+              src="../assets/海报.png"
+              alt="AsyncLab 加入我们"
+            />
+          </a>
         </div>
       </div>
     </el-card>
@@ -350,5 +352,27 @@ const goToDashboard = () => {
 .intro-text strong {
   color: #409eff;
   font-weight: 600;
+}
+</style>
+<style>
+/* 暗色模式覆盖：Home 页面文案与标题颜色 */
+html.dark .home .card-header h1 {
+  color: var(--el-color-primary);
+}
+html.dark .home .card-header h3 {
+  color: var(--el-text-color-primary);
+}
+html.dark .home .welcome-text h2,
+html.dark .home .content-title h2 {
+  color: var(--el-text-color-primary);
+}
+html.dark .home .welcome-text p,
+html.dark .home .content-description p,
+html.dark .home .intro-text,
+html.dark .home .intro-text p {
+  color: var(--el-text-color-regular);
+}
+html.dark .home .intro-text strong {
+  color: var(--el-color-primary);
 }
 </style>
