@@ -269,9 +269,6 @@ const animate = () => {
     text-align: center;
   }
 }
-</style> 
-<style>
-/* 暗色模式：404 页切换为星空背景并隐藏粒子 */
 html.dark .not-found {
   background:
     radial-gradient(900px 600px at 22% 28%, rgba(56, 189, 248, 0.14), transparent 60%),
