@@ -555,7 +555,6 @@ const animate = () => {
     padding: 24px 20px;
   }
 }
-/* 暗色模式覆盖：Login 背景与品牌面板 */
 html.dark .login-container {
   background: radial-gradient(
       1200px 600px at 10% 10%,
