@@ -14,8 +14,10 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile">设置</el-dropdown-item>
-              <el-dropdown-item divided command="OIDC">OIDC设置</el-dropdown-item>
-              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+              <el-dropdown-item divided command="SSO">SSO设置</el-dropdown-item>
+              <el-dropdown-item divided command="logout"
+                >退出登录</el-dropdown-item
+              >
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -68,12 +70,12 @@
               <h3>{{ getPageTitle() }}</h3>
             </div>
           </template>
-          
+
           <div class="dashboard-content">
             <div v-if="activeMenu === 'overview'" class="overview-page">
               <HomeHero compact />
             </div>
-            <UsersPage 
+            <UsersPage
               v-else-if="activeMenu === 'users'"
               :users="users"
               :is-admin="isAdmin"
@@ -89,125 +91,128 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watchEffect, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
-import { removeToken, getUserProfile, clearUserProfile } from '@/utils/auth'
-import { useWarningConfirm } from '@/utils/msgTip'
-import { 
-  ArrowDown, 
-  House, 
-  User 
-} from '@element-plus/icons-vue'
-import UsersPage from '@/components/dashboard/UsersPage.vue'
-import HomeHero from '@/components/HomeHero.vue'
-import { getUserList } from '@/api/user'
-import type { User as ApiUser } from '@/api/types'
+import { ref, computed, onMounted, watchEffect, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { removeToken, getUserProfile, clearUserProfile } from "@/utils/auth";
+import { useWarningConfirm } from "@/utils/msgTip";
+import { ArrowDown, House, User } from "@element-plus/icons-vue";
+import UsersPage from "@/components/dashboard/UsersPage.vue";
+import HomeHero from "@/components/HomeHero.vue";
+import { getUserList } from "@/api/user";
+import type { User as ApiUser } from "@/api/types";
 
-type MenuKey = 'overview' | 'projects' | 'users'
+type MenuKey = "overview" | "projects" | "users";
 
-const router = useRouter()
-const activeMenu = ref<MenuKey>('overview')
+const router = useRouter();
+const activeMenu = ref<MenuKey>("overview");
 const fullName = computed(() => {
-  const profile = getUserProfile() as any
-  const name = (profile?.surName ?? '') + (profile?.givenName ?? '')
-  return name || '用户'
-})
+  const profile = getUserProfile() as any;
+  const name = (profile?.surName ?? "") + (profile?.givenName ?? "");
+  return name || "用户";
+});
 
 // 用户数据
-const users = ref<ApiUser[]>([])
-const usersLoading = ref<boolean>(false)
+const users = ref<ApiUser[]>([]);
+const usersLoading = ref<boolean>(false);
 
-const profile = computed(() => (getUserProfile() as any) || {})
-const isAdmin = computed(() => profile.value?.role === 'admin')
-const isDefault = computed(() => profile.value?.role === 'default')
-const isRestricted = computed(() => profile.value?.role === 'restricted')
+const profile = computed(() => (getUserProfile() as any) || {});
+const isAdmin = computed(() => profile.value?.role === "admin");
+const isDefault = computed(() => profile.value?.role === "default");
+const isRestricted = computed(() => profile.value?.role === "restricted");
 
 // 获取页面标题
 const getPageTitle = () => {
   const titles: Record<MenuKey, string> = {
-    overview: '系统概览',
-    projects: '项目管理',
-    users: '用户管理'
-  }
-  return titles[activeMenu.value]
-}
+    overview: "系统概览",
+    projects: "项目管理",
+    users: "用户管理",
+  };
+  return titles[activeMenu.value];
+};
 
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
-  activeMenu.value = index as MenuKey
-}
+  activeMenu.value = index as MenuKey;
+};
 
 // 处理用户下拉菜单命令
 const handleCommand = async (command: string) => {
   switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'logout':
-      await handleLogout()
-      break
-    case 'OIDC':
-      window.open('https://keycloak.internal.asynclab.club/realms/asynclab/account  ', '_blank')
-      break
+    case "profile":
+      router.push("/profile");
+      break;
+    case "logout":
+      await handleLogout();
+      break;
+    case "SSO":
+      window.open(
+        "https://sso.internal.asynclab.club/realms/asynclab/account  ",
+        "_blank"
+      );
+      break;
   }
-}
+};
 
 // 处理退出登录
 const handleLogout = async () => {
   try {
-    await useWarningConfirm('确定要退出登录吗？')
-    removeToken()
-    clearUserProfile()
-    router.push('/login')
+    await useWarningConfirm("确定要退出登录吗？");
+    removeToken();
+    clearUserProfile();
+    router.push("/login");
   } catch {
     // 用户取消退出
   }
-}
+};
 
 // 用户相关方法
 const createUser = () => {
-  console.log('创建用户')
-}
+  console.log("创建用户");
+};
 
 // 已由 UsersPage 内部处理编辑/删除，通过 refresh 事件回传，这里无需实现
 
 // 加载用户列表并按权限过滤
 onMounted(async () => {
-  if (activeMenu.value !== 'users') return
-})
+  if (activeMenu.value !== "users") return;
+});
 
 // 进入用户管理时拉取数据
 const loadUsers = async () => {
-  usersLoading.value = true
-  const list = await getUserList() as any
-  let data: ApiUser[] = Array.isArray(list?.data) ? list.data : (Array.isArray(list) ? list : [])
+  usersLoading.value = true;
+  const list = (await getUserList()) as any;
+  let data: ApiUser[] = Array.isArray(list?.data)
+    ? list.data
+    : Array.isArray(list)
+    ? list
+    : [];
   if (isAdmin.value) {
-    users.value = data
+    users.value = data;
   } else if (isDefault.value) {
     // 仅同组（按 category 分组）
-    const myCategory = profile.value?.category
-    users.value = data.filter((u: any) => u.category === myCategory && u.role === 'default')
+    const myCategory = profile.value?.category;
+    users.value = data.filter(
+      (u: any) => u.category === myCategory && u.role === "default"
+    );
   } else if (isRestricted.value) {
-    users.value = []
+    users.value = [];
   }
-  await nextTick()
-  usersLoading.value = false
-}
+  await nextTick();
+  usersLoading.value = false;
+};
 
 // 切换到用户管理菜单时触发
 watchEffect(() => {
-  if (activeMenu.value === 'users') {
+  if (activeMenu.value === "users") {
     if (isRestricted.value) {
       // 无权限访问
-      users.value = []
-      usersLoading.value = false
+      users.value = [];
+      usersLoading.value = false;
     } else {
-      loadUsers()
+      loadUsers();
     }
   }
-})
-
-
+});
 </script>
 
 <style scoped>
@@ -289,18 +294,30 @@ watchEffect(() => {
 }
 
 @media (max-width: 1200px) {
-  .dashboard-header { padding: 0 12px; }
-  .dashboard-main { padding: 12px; }
+  .dashboard-header {
+    padding: 0 12px;
+  }
+  .dashboard-main {
+    padding: 12px;
+  }
 }
 
 @media (max-width: 992px) {
-  .dashboard-container { display: block; }
-  .dashboard-sidebar { display: none; }
+  .dashboard-container {
+    display: block;
+  }
+  .dashboard-sidebar {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
-  .dashboard-header { min-height: 56px; }
-  .dashboard-main { padding: 10px; }
+  .dashboard-header {
+    min-height: 56px;
+  }
+  .dashboard-main {
+    padding: 10px;
+  }
 }
 
 .mobile-nav {
@@ -310,7 +327,9 @@ watchEffect(() => {
 }
 
 @media (max-width: 992px) {
-  .mobile-nav { display: block; }
+  .mobile-nav {
+    display: block;
+  }
 }
 
 /* 概览为空白占位，不添加多余内容 */
@@ -325,7 +344,7 @@ watchEffect(() => {
   width: 120px;
   height: 120px;
 }
-</style> 
+</style>
 <style>
 /* 暗色模式覆盖：Dashboard 头部/侧栏/容器/移动导航 */
 html.dark .dashboard-header {
@@ -333,7 +352,9 @@ html.dark .dashboard-header {
   border-bottom-color: var(--border-color);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
-html.dark .header-left h2 { color: var(--el-color-primary); }
+html.dark .header-left h2 {
+  color: var(--el-color-primary);
+}
 
 html.dark .dashboard-sidebar {
   background: var(--card-bg);
@@ -349,5 +370,7 @@ html.dark .mobile-nav {
   border-bottom-color: var(--border-color);
 }
 
-html.dark .card-header h3 { color: var(--el-text-color-primary); }
+html.dark .card-header h3 {
+  color: var(--el-text-color-primary);
+}
 </style>
