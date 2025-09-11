@@ -326,3 +326,28 @@ watchEffect(() => {
   height: 120px;
 }
 </style> 
+<style>
+/* 暗色模式覆盖：Dashboard 头部/侧栏/容器/移动导航 */
+html.dark .dashboard-header {
+  background: var(--card-bg);
+  border-bottom-color: var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+html.dark .header-left h2 { color: var(--el-color-primary); }
+
+html.dark .dashboard-sidebar {
+  background: var(--card-bg);
+  border-right-color: var(--border-color);
+}
+
+html.dark .dashboard-main {
+  background: #0f131a;
+}
+
+html.dark .mobile-nav {
+  background: var(--card-bg);
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .card-header h3 { color: var(--el-text-color-primary); }
+</style>

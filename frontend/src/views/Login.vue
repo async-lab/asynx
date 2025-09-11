@@ -555,4 +555,109 @@ const animate = () => {
     padding: 24px 20px;
   }
 }
+html.dark .login-container {
+  background: radial-gradient(
+      1200px 600px at 10% 10%,
+      rgba(96, 165, 250, 0.10),
+      transparent
+    ),
+    radial-gradient(
+      800px 400px at 90% 80%,
+      rgba(134, 239, 172, 0.10),
+      transparent
+    ),
+    /* 星云彩色雾气层 */
+    radial-gradient(900px 600px at 20% 30%, rgba(56, 189, 248, 0.14), transparent 60%),
+    radial-gradient(1000px 700px at 78% 68%, rgba(168, 85, 247, 0.12), transparent 60%),
+    radial-gradient(800px 500px at 40% 80%, rgba(59, 130, 246, 0.10), transparent 60%),
+    linear-gradient(135deg, #0b0f14 0%, #0f1720 100%);
+  animation: space-drift 40s linear infinite;
+}
+
+html.dark .login-card {
+  background: var(--card-bg);
+}
+
+html.dark .brand-pane {
+  background: linear-gradient(180deg, #0f1720 0%, #0b0f14 100%);
+}
+
+html.dark .brand-header h2 { color: var(--el-text-color-primary); }
+html.dark .brand-header p { color: var(--el-text-color-regular); }
+html.dark .brand-highlights li { color: var(--el-color-primary); }
+html.dark .brand-highlights a { color: var(--el-color-primary); border-color: transparent; }
+html.dark .brand-highlights a:hover { color: #ffffff; }
+
+html.dark .login-header h2 { color: var(--el-text-color-primary); }
+html.dark .login-header p { color: var(--el-text-color-regular); }
+
+/* 星空背景与关闭粒子（暗色模式） */
+html.dark .particles-canvas { display: none; }
+html.dark .login-container::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 65% 25%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.88) 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 55%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 40%, rgba(255,255,255,0.92) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 20%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 64%, rgba(255,255,255,0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 12% 52%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 48% 82%, rgba(255,255,255,0.92) 50%, transparent 51%),
+    radial-gradient(1px 1px at 68% 12%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 48%, rgba(255,255,255,0.95) 50%, transparent 51%);
+  background-size: auto;
+  animation: twinkle 2.2s infinite ease-in-out, star-drift-1 60s linear infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 1; }
+}
+@keyframes star-drift-1 {
+  0% { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
+  100% { background-position: 80px 60px, -60px 40px, 100px -40px, -80px -60px, 40px -80px, -100px 100px, 60px -60px, -40px 80px, 120px 20px, -120px -20px, 90px -90px, -90px 90px, 70px 40px, -70px -40px; }
+}
+
+/* 第二层较大的星点，错相闪烁，提升可见度 */
+html.dark .login-container::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1.5px 1.5px at 12% 22%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 52% 18%, rgba(255,255,255,0.92) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 78% 46%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 34% 82%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 90% 72%, rgba(255,255,255,1) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 26% 36%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 68% 68%, rgba(255,255,255,0.98) 50%, transparent 51%);
+  background-size: auto;
+  animation: twinkle2 2.8s infinite ease-in-out alternate, star-drift-2 90s linear infinite;
+}
+
+@keyframes twinkle2 {
+  0% { opacity: 0.15; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+@keyframes star-drift-2 {
+  0% { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
+  100% { background-position: -120px 80px, 100px -60px, -80px -100px, 60px 120px, -140px 40px, 90px -90px, -60px 60px; }
+}
+
+@keyframes space-drift {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 40px 60px, -60px 40px, 30px -30px, -40px -60px, 20px -20px, -30px 30px, 0 0; }
+}
 </style>

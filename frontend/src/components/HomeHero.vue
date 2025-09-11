@@ -347,3 +347,62 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+<style>
+/* 暗色模式：HomeHero 使用星空背景并隐藏粒子 */
+html.dark .home-hero {
+  background:
+              radial-gradient(900px 600px at 14% 18%, rgba(56, 189, 248, 0.14), transparent 60%),
+              radial-gradient(800px 520px at 86% 76%, rgba(168, 85, 247, 0.12), transparent 60%),
+              radial-gradient(700px 420px at 48% 88%, rgba(59, 130, 246, 0.10), transparent 60%),
+              linear-gradient(135deg, #0b0f14 0%, #0f1720 60%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  animation: hero-space-drift 40s linear infinite;
+}
+html.dark .home-hero::before {
+  background-image: none;
+}
+html.dark .hero-particles { display: none; }
+html.dark .hero-title { color: var(--el-text-color-primary); }
+html.dark .hero-subtitle { color: var(--el-text-color-regular); }
+html.dark .hero-link {
+  color: var(--el-color-primary);
+  border-color: rgba(96, 165, 250, 0.25);
+  background: rgba(96, 165, 250, 0.08);
+}
+/* 星空叠加层与更强闪烁 */
+html.dark .home-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1px 1px at 18% 26%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1px 1px at 42% 68%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 62% 22%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 82% 62%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1px 1px at 24% 82%, rgba(255,255,255,0.88) 50%, transparent 51%),
+    radial-gradient(1px 1px at 12% 52%, rgba(255,255,255,0.92) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 40%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 16%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 74%, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 54% 34%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 12% 18%, rgba(255,255,255,0.98) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 72% 40%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 34% 86%, rgba(255,255,255,0.98) 50%, transparent 51%);
+  animation: hero-twinkle 2.2s infinite ease-in-out, hero-drift 80s linear infinite;
+}
+
+@keyframes hero-twinkle {
+  0%, 100% { opacity: 0.14; }
+  50% { opacity: 1; }
+}
+@keyframes hero-drift {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 80px 60px, -60px 40px, 100px -40px, -80px -60px, 40px -80px, -100px 100px, 60px -60px, -40px 80px, 120px 20px, -120px -20px, 90px -90px, -90px 90px, 60px 30px; }
+}
+@keyframes hero-space-drift {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 40px 60px, -60px 40px, 30px -30px, 0 0; }
+}
+</style>

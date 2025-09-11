@@ -85,30 +85,41 @@
     </div>
   </div>
     <!-- 编辑对话框（仅管理员） -->
-    <el-dialog v-model="editVisible" title="编辑用户" width="520px">
-      <el-form label-width="96px">
+    <el-dialog v-model="editVisible" title="编辑用户" :width="isMobile ? '96%' : '640px'" >
+      <el-form :label-width="isMobile ? '0' : '96px'" :label-position="isMobile ? 'top' : 'right'" class="edit-form">
         <el-form-item label="用户名">
-          <el-input v-model="editForm.username" disabled />
+          <el-input v-model="editForm.username" disabled style="width: 100%" />
         </el-form-item>
-        <el-form-item label="角色">
-          <el-select v-model="editForm.role" placeholder="选择角色" style="width: 240px;">
-            <el-option label="admin" value="admin" />
-            <el-option label="default" value="default" />
-            <el-option label="restricted" value="restricted" />
-          </el-select>
-          <el-button style="margin-left: 12px;" type="primary" :loading="savingRole" @click="onSaveRole">保存角色</el-button>
-        </el-form-item>
-        <el-form-item label="账号类型">
-          <el-select v-model="editForm.category" placeholder="选择类型" style="width: 240px;">
-            <el-option label="system" value="system" />
-            <el-option label="member" value="member" />
-            <el-option label="external" value="external" />
-          </el-select>
-          <el-button style="margin-left: 12px;" type="primary" :loading="savingCategory" @click="onSaveCategory">保存类型</el-button>
-        </el-form-item>
-        <el-form-item label="新密码">
-          <el-input v-model.trim="editForm.password" type="password" show-password style="width: 240px;" />
-          <el-button style="margin-left: 12px;" type="warning" :disabled="!editForm.password" :loading="savingPwd" @click="onChangePwd">修改密码</el-button>
+
+        <div class="edit-grid single">
+          <el-form-item label="角色" class="compact-item">
+            <div class="control-with-action">
+              <el-select v-model="editForm.role" placeholder="选择角色" class="control">
+                <el-option label="admin" value="admin" />
+                <el-option label="default" value="default" />
+                <el-option label="restricted" value="restricted" />
+              </el-select>
+              <el-button type="primary" :loading="savingRole" @click="onSaveRole">保存角色</el-button>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="账号类型" class="compact-item">
+            <div class="control-with-action">
+              <el-select v-model="editForm.category" placeholder="选择类型" class="control">
+                <el-option label="system" value="system" />
+                <el-option label="member" value="member" />
+                <el-option label="external" value="external" />
+              </el-select>
+              <el-button type="primary" :loading="savingCategory" @click="onSaveCategory">保存类型</el-button>
+            </div>
+          </el-form-item>
+        </div>
+
+        <el-form-item label="新密码" class="compact-item">
+          <div class="control-with-action">
+            <el-input v-model.trim="editForm.password" type="password" show-password style="width: 100%" />
+            <el-button type="warning" :disabled="!editForm.password" :loading="savingPwd" @click="onChangePwd">修改密码</el-button>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -118,29 +129,29 @@
       </template>
     </el-dialog>
     <!-- 新建用户对话框（仅管理员） -->
-    <el-dialog v-model="createVisible" title="新建用户" width="520px">
-      <el-form label-width="96px">
+    <el-dialog v-model="createVisible" title="新建用户" :width="isMobile ? '96%' : '520px'" >
+      <el-form :label-width="isMobile ? '0' : '96px'" :label-position="isMobile ? 'top' : 'right'">
         <el-form-item label="用户名">
-          <el-input v-model.trim="createForm.username" />
+          <el-input v-model.trim="createForm.username" style="width: 100%" />
         </el-form-item>
         <el-form-item label="姓">
-          <el-input v-model.trim="createForm.surName" />
+          <el-input v-model.trim="createForm.surName" style="width: 100%" />
         </el-form-item>
         <el-form-item label="名">
-          <el-input v-model.trim="createForm.givenName" />
+          <el-input v-model.trim="createForm.givenName" style="width: 100%" />
         </el-form-item>
         <el-form-item label="邮箱">
-          <el-input v-model.trim="createForm.mail" />
+          <el-input v-model.trim="createForm.mail" style="width: 100%" />
         </el-form-item>
         <el-form-item label="角色">
-          <el-select v-model="createForm.role" placeholder="选择角色" style="width: 240px;">
+          <el-select v-model="createForm.role" placeholder="选择角色" style="width: 100%;">
             <el-option label="admin" value="admin" />
             <el-option label="default" value="default" />
             <el-option label="restricted" value="restricted" />
           </el-select>
         </el-form-item>
         <el-form-item label="账号类型">
-          <el-select v-model="createForm.category" placeholder="选择类型" style="width: 240px;">
+          <el-select v-model="createForm.category" placeholder="选择类型" style="width: 100%;">
             <el-option label="system" value="system" />
             <el-option label="member" value="member" />
             <el-option label="external" value="external" />
@@ -416,6 +427,58 @@ const onSubmitCreate = async () => {
 
 @media (max-width: 768px) {
   .toolbar { flex-direction: column; align-items: stretch; }
+  /* 对话框内联按钮在小屏改为换行占满 */
+  :deep(.el-dialog__body) .dialog-inline-action {
+    margin-left: 0 !important;
+    margin-top: 8px;
+    width: 100%;
+  }
+  :deep(.el-dialog) {
+    margin: 0 !important;
+  }
+  :deep(.el-dialog__footer) {
+    padding: 10px 12px;
+  }
+}
+
+/* 编辑对话框响应式网格与“控件+动作”布局 */
+.edit-form .edit-grid { display: grid; gap: 12px 0; width: 100%;}
+.edit-form .edit-grid.single { grid-template-columns: 1fr; }
+.edit-form .compact-item :deep(.el-form-item__content) {
+  width: 100%;
+}
+.control-with-action {
+  display: grid;
+  grid-template-columns: 1fr max-content;
+  gap: 12px;
+  align-items: center;
+}
+/* 桌面端给下拉控件一个舒适的最小宽度，避免被过度压缩 */
+.control-with-action .control { min-width: 350px; }
+
+
+@media (max-width: 992px) {
+  .control-with-action { grid-template-columns: 1fr; }
+  .control-with-action .control { min-width: 180px; width: 100%; }
+}
+
+/* 暗色模式：用户管理页面文字与标签对比度增强 */
+html.dark .users-page .name { color: var(--el-text-color-primary); }
+html.dark .users-page .username { color: var(--el-text-color-secondary); }
+html.dark .users-page .label { color: var(--el-text-color-secondary); }
+html.dark .users-page .value { color: var(--el-text-color-regular); }
+html.dark .users-page .tag {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--el-text-color-regular);
+  border: 1px solid var(--border-color);
+}
+
+/* 表格内标题与正文在暗色下略提亮（Element Plus 已做大部分适配，这里微调） */
+html.dark .users-page .el-table th.el-table__cell {
+  color: var(--el-text-color-primary);
+}
+html.dark .users-page .el-table .cell {
+  color: var(--el-text-color-regular);
 }
 </style>
 
