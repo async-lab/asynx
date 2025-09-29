@@ -185,9 +185,11 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "创建新用户账号。需要 ADMIN 角色权限。",
+                "description": "创建新用户账号。支持两种方式：1) JSON格式单个注册 2) CSV文件批量注册。需要 ADMIN 角色权限。\n\n**单个注册 (application/json)**\n发送JSON格式的单个用户数据\n\n**批量注册 (multipart/form-data 或 text/csv)**\n上传CSV文件，CSV格式为：username,surName,givenName,mail,category,role\n示例：user001,张,三,zhangsan@example.com,member,default",
                 "consumes": [
-                    "application/json"
+                    "application/json",
+                    "multipart/form-data",
+                    "text/csv"
                 ],
                 "produces": [
                     "application/json"
@@ -198,23 +200,39 @@
                 "summary": "注册新用户",
                 "parameters": [
                     {
-                        "description": "注册用户请求",
+                        "description": "单个注册请求 (Content-Type: application/json)",
                         "name": "body",
                         "in": "body",
-                        "required": true,
                         "schema": {
                             "$ref": "#/definitions/controller.RequestRegister"
                         }
+                    },
+                    {
+                        "type": "file",
+                        "description": "批量注册CSV文件 (Content-Type: multipart/form-data)",
+                        "name": "file",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "成功注册用户，返回 'ok'",
+                        "description": "批量注册全部成功",
                         "schema": {
                             "type": "object",
                             "properties": {
                                 "data": {
-                                    "type": "string"
+                                    "$ref": "#/definitions/controller.BatchRegisterResult"
+                                }
+                            }
+                        }
+                    },
+                    "207": {
+                        "description": "批量注册部分失败",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/controller.BatchRegisterResult"
                                 }
                             }
                         }
@@ -254,6 +272,215 @@
                     },
                     "409": {
                         "description": "用户已存在",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "不支持的媒体类型",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/category": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "批量修改指定用户的账号类型。需要 ADMIN 角色权限。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "批量修改账号类型",
+                "parameters": [
+                    {
+                        "description": "批量修改账号类型请求",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RequestBatchModifyCategory"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "全部成功：批量修改结果",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/controller.BatchModifyResult"
+                                }
+                            }
+                        }
+                    },
+                    "207": {
+                        "description": "部分失败：批量修改结果",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/controller.BatchModifyResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/role": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "批量修改指定用户的角色权限。需要 ADMIN 角色权限。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "批量修改角色权限",
+                "parameters": [
+                    {
+                        "description": "批量修改角色权限请求",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RequestBatchModifyRole"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "全部成功：批量修改结果",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/controller.BatchModifyResult"
+                                }
+                            }
+                        }
+                    },
+                    "207": {
+                        "description": "部分失败：批量修改结果",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/controller.BatchModifyResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "权限不足",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -970,6 +1197,71 @@
         }
     },
     "definitions": {
+        "controller.BatchFailureInfo": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "row": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.BatchModifyFailure": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.BatchModifyResult": {
+            "type": "object",
+            "properties": {
+                "failed": {
+                    "type": "integer"
+                },
+                "failures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.BatchModifyFailure"
+                    }
+                },
+                "success": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.BatchRegisterResult": {
+            "type": "object",
+            "properties": {
+                "failed": {
+                    "type": "integer"
+                },
+                "failures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.BatchFailureInfo"
+                    }
+                },
+                "success": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "controller.CreateTokenRequest": {
             "type": "object",
             "required": [
@@ -982,6 +1274,42 @@
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "controller.RequestBatchModifyCategory": {
+            "type": "object",
+            "required": [
+                "category",
+                "userIds"
+            ],
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "userIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "controller.RequestBatchModifyRole": {
+            "type": "object",
+            "required": [
+                "role",
+                "userIds"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string"
+                },
+                "userIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

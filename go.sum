@@ -19,8 +19,8 @@ github.com/cloudwego/base64x v0.1.6/go.mod h1:OFcloc187FXDaYHvrNIjxSe8ncn0OOM8gE
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dsx137/gg-gin v0.0.0-20250901065200-84d4cd816961 h1:sjNXtpPx/+p/QNFLrNlAhuip4HJGUM/KL0zBJYMB8fI=
-github.com/dsx137/gg-gin v0.0.0-20250901065200-84d4cd816961/go.mod h1:4+/7pDteh1CCT43+AmGsasvXkdTv0mRerUvE7w6MRP4=
+github.com/dsx137/gg-gin v0.0.0-20251001191328-6833e9eb9e9a h1:i0Qq9FnKQ3XTsY4t3cNP+NtCscjK83tFCgJkGG2mqJA=
+github.com/dsx137/gg-gin v0.0.0-20251001191328-6833e9eb9e9a/go.mod h1:4+/7pDteh1CCT43+AmGsasvXkdTv0mRerUvE7w6MRP4=
 github.com/dsx137/gg-kit v0.0.0-20250901054119-4a75e612b3b8 h1:0Jq9lZ9Aut6IyVgQY+9VcI5EBlZy4u45bjJwWuUAQJE=
 github.com/dsx137/gg-kit v0.0.0-20250901054119-4a75e612b3b8/go.mod h1:IP0n2PQ3R6/pmyydUJpHkD23FWnF7Y+e/SZUqFqH7+I=
 github.com/dsx137/gg-logging v0.0.0-20250720193954-3aa8e6cfa181 h1:ESpeIERZHD14uxnf8mS4BhxQ/37D+nCTj/9IssbNVSc=

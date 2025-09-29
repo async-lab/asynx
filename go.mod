@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	aidanwoods.dev/go-paseto v1.5.4
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/dsx137/gg-gin v0.0.0-20250901065200-84d4cd816961
+	github.com/dsx137/gg-gin v0.0.0-20251001191328-6833e9eb9e9a
 	github.com/dsx137/gg-kit v0.0.0-20250901054119-4a75e612b3b8
 	github.com/dsx137/gg-logging v0.0.0-20250720193954-3aa8e6cfa181
 	github.com/gin-gonic/gin v1.10.1
