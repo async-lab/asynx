@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"encoding/csv"
+	"io"
 	"net/http"
+	"strings"
 
 	"asynclab.club/asynx/backend/pkg/security"
 	"asynclab.club/asynx/backend/pkg/service"
@@ -22,6 +25,8 @@ func NewControllerUser(g *gin.RouterGroup, serviceManager *service.ServiceManage
 	g.PUT("/:uid/password", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleChangePassword))
 	g.PUT("/:uid/category", security.GuardMiddleware(security.RoleAdmin), gggin.ToGinHandler(ctl.HandleModifyCategory))
 	g.PUT("/:uid/role", security.GuardMiddleware(security.RoleAdmin), gggin.ToGinHandler(ctl.HandleModifyRole))
+	g.PATCH("/category", security.GuardMiddleware(security.RoleAdmin), gggin.ToGinHandler(ctl.HandleBatchModifyCategory))
+	g.PATCH("/role", security.GuardMiddleware(security.RoleAdmin), gggin.ToGinHandler(ctl.HandleBatchModifyRole))
 
 	// Deprecated
 	g.GET("/:uid/category", security.GuardMiddleware(security.RoleRestricted), gggin.ToGinHandler(ctl.HandleGetCategory))
@@ -128,7 +133,6 @@ func (ctl *ControllerUser) HandleChangePassword(c *gin.Context) (*gggin.Response
 	err = ctl.serviceManager.ChangePassword(uid, req.Password)
 	if err != nil {
 		return nil, service.MapErrorToHttp(err)
-
 	}
 
 	return gggin.Ok, nil
@@ -230,24 +234,52 @@ type RequestRegister struct {
 }
 
 // @Summary      注册新用户
-// @Description  创建新用户账号。需要 ADMIN 角色权限。
+// @Description  创建新用户账号。支持两种方式：1) JSON格式单个注册 2) CSV文件批量注册。需要 ADMIN 角色权限。
+// @Description
+// @Description  **单个注册 (application/json)**
+// @Description  发送JSON格式的单个用户数据
+// @Description
+// @Description  **批量注册 (multipart/form-data 或 text/csv)**
+// @Description  上传CSV文件，CSV格式为：username,surName,givenName,mail,category,role
+// @Description  示例：user001,张,三,zhangsan@example.com,member,default
 // @Tags         users
-// @Accept       json
+// @Accept       json,multipart/form-data,text/csv
 // @Produce      json
-// @Param        body  body      RequestRegister  true  "注册用户请求"
-// @Success      200  {object} object{data=string} "成功注册用户，返回 'ok'"
+// @Param        body  body      RequestRegister  false  "单个注册请求 (Content-Type: application/json)"
+// @Param        file  formData  file  false  "批量注册CSV文件 (Content-Type: multipart/form-data)"
+// @Success      200  {object} object{data=string} "单个注册成功，返回 'ok'"
+// @Success      200  {object} object{data=BatchRegisterResult} "批量注册全部成功"
+// @Success      207  {object} object{data=BatchRegisterResult} "批量注册部分失败"
 // @Failure      400  {object} object{data=string} "请求参数错误"
 // @Failure      401  {object} object{data=string} "未授权访问"
 // @Failure      403  {object} object{data=string} "权限不足"
 // @Failure      409  {object} object{data=string} "用户已存在"
+// @Failure      415  {object} object{data=string} "不支持的媒体类型"
 // @Failure      500  {object} object{data=string} "服务器内部错误"
 // @Router       /users [post]
 // @Security     BearerAuth
-func (ctl *ControllerUser) HandleRegister(c *gin.Context) (*gggin.Response[string], *gggin.HttpError) {
+func (ctl *ControllerUser) HandleRegister(c *gin.Context) (*gggin.Response[any], *gggin.HttpError) {
 	_, ok := gggin.Get[*security.GuardResult](c, "guard")
 	if !ok {
 		return nil, ErrHttpGuardFail
 	}
+
+	contentType := c.ContentType()
+
+	// 根据 Content-Type 区分单个注册还是批量注册
+	if contentType == "application/json" {
+		// 单个用户注册
+		return ctl.handleSingleRegister(c)
+	} else if strings.HasPrefix(contentType, "multipart/form-data") || contentType == "text/csv" {
+		// CSV 批量注册
+		return ctl.handleBatchRegisterFromCSV(c)
+	}
+
+	return nil, gggin.NewHttpError(http.StatusUnsupportedMediaType, "不支持的 Content-Type，请使用 application/json (单个注册) 或 multipart/form-data (批量注册)")
+}
+
+// handleSingleRegister 处理单个用户注册（JSON格式）
+func (ctl *ControllerUser) handleSingleRegister(c *gin.Context) (*gggin.Response[any], *gggin.HttpError) {
 	req, err := gggin.ShouldBindJSON[RequestRegister](c)
 	if err != nil {
 		return nil, gggin.NewHttpError(http.StatusBadRequest, err.Error())
@@ -258,7 +290,126 @@ func (ctl *ControllerUser) HandleRegister(c *gin.Context) (*gggin.Response[strin
 		return nil, service.MapErrorToHttp(err)
 	}
 
-	return gggin.Ok, nil
+	return gggin.NewResponse[any]("ok"), nil
+}
+
+// handleBatchRegisterFromCSV 处理CSV文件批量注册
+func (ctl *ControllerUser) handleBatchRegisterFromCSV(c *gin.Context) (*gggin.Response[any], *gggin.HttpError) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		return nil, gggin.NewHttpError(http.StatusBadRequest, "未找到上传的文件，请使用 'file' 字段上传CSV文件")
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return nil, gggin.NewHttpError(http.StatusInternalServerError, "无法读取上传的文件")
+	}
+	defer src.Close()
+
+	reader := csv.NewReader(src)
+
+	header, err := reader.Read()
+	if err != nil {
+		return nil, gggin.NewHttpError(http.StatusBadRequest, "CSV文件格式错误：无法读取表头")
+	}
+
+	// 验证表头格式
+	expectedHeaders := []string{"username", "surName", "givenName", "mail", "category", "role"}
+	hasHeader := false
+	if len(header) == len(expectedHeaders) {
+		// 检查前3个关键字段来判断是否有表头，避免误判
+		h0 := strings.ToLower(header[0])
+		h3 := strings.ToLower(header[3])
+		h4 := strings.ToLower(header[4])
+		if h0 == "username" && h3 == "mail" && h4 == "category" {
+			hasHeader = true
+		}
+	}
+
+	var result BatchRegisterResult
+	rowNum := 1
+
+	if !hasHeader {
+		if err := ctl.processCSVRow(header, &result, rowNum); err != nil {
+			return nil, err
+		}
+		rowNum++
+	}
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			result.Failed++
+			result.Total++
+			result.Failures = append(result.Failures, BatchFailureInfo{
+				Row:      rowNum,
+				Username: "",
+				Error:    "CSV行格式错误: " + err.Error(),
+			})
+			rowNum++
+			continue
+		}
+
+		if err := ctl.processCSVRow(record, &result, rowNum); err != nil {
+			return nil, err
+		}
+		rowNum++
+	}
+
+	if result.Failed > 0 && result.Success > 0 {
+		// 部分失败：使用207 Multi-Status
+		return gggin.NewResponseWithStatusCode[any](http.StatusMultiStatus, result), nil
+	}
+
+	return gggin.NewResponse[any](result), nil
+}
+
+func (ctl *ControllerUser) processCSVRow(record []string, result *BatchRegisterResult, rowNum int) *gggin.HttpError {
+	result.Total++
+
+	if len(record) != 6 {
+		result.Failed++
+		result.Failures = append(result.Failures, BatchFailureInfo{
+			Row:      rowNum,
+			Username: "",
+			Error:    "CSV格式错误：应包含6个字段 (username,surName,givenName,mail,category,role)",
+		})
+		return nil
+	}
+
+	username := strings.TrimSpace(record[0])
+	surName := strings.TrimSpace(record[1])
+	givenName := strings.TrimSpace(record[2])
+	mail := strings.TrimSpace(record[3])
+	category := strings.TrimSpace(record[4])
+	role := strings.TrimSpace(record[5])
+
+	if username == "" || mail == "" || category == "" || role == "" {
+		result.Failed++
+		result.Failures = append(result.Failures, BatchFailureInfo{
+			Row:      rowNum,
+			Username: username,
+			Error:    "必填字段不能为空 (username, mail, category, role)",
+		})
+		return nil
+	}
+
+	err := ctl.serviceManager.Register(username, surName, givenName, mail, category, role)
+	if err != nil {
+		result.Failed++
+		result.Failures = append(result.Failures, BatchFailureInfo{
+			Row:      rowNum,
+			Username: username,
+			Error:    err.Error(),
+		})
+	} else {
+		result.Success++
+	}
+
+	return nil
 }
 
 // @Summary      删除用户
@@ -371,4 +522,151 @@ func (ctl *ControllerUser) HandleGetCategory(c *gin.Context) (*gggin.Response[se
 	}
 
 	return gggin.NewResponse(category), nil
+}
+
+// ======== 批量操作相关类型定义 ========
+
+// BatchRegisterResult 批量注册结果
+type BatchRegisterResult struct {
+	Success  int                `json:"success"`
+	Failed   int                `json:"failed"`
+	Total    int                `json:"total"`
+	Failures []BatchFailureInfo `json:"failures"`
+}
+
+// BatchFailureInfo 批量操作失败信息
+type BatchFailureInfo struct {
+	Row      int    `json:"row"`
+	Username string `json:"username"`
+	Error    string `json:"error"`
+}
+
+// RequestBatchModifyCategory 批量修改类别请求体
+type RequestBatchModifyCategory struct {
+	UserIds  []string `json:"userIds" binding:"required"`
+	Category string   `json:"category" binding:"required"`
+}
+
+// RequestBatchModifyRole 批量修改角色请求体
+type RequestBatchModifyRole struct {
+	UserIds []string `json:"userIds" binding:"required"`
+	Role    string   `json:"role" binding:"required"`
+}
+
+// BatchModifyResult 批量修改结果
+type BatchModifyResult struct {
+	Success  int                  `json:"success"`
+	Failed   int                  `json:"failed"`
+	Total    int                  `json:"total"`
+	Failures []BatchModifyFailure `json:"failures"`
+}
+
+// BatchModifyFailure 批量修改失败信息
+type BatchModifyFailure struct {
+	UserId string `json:"userId"`
+	Error  string `json:"error"`
+}
+
+// ======== 批量操作功能实现 ========
+
+// @Summary      批量修改账号类型
+// @Description  批量修改指定用户的账号类型。需要 ADMIN 角色权限。
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      RequestBatchModifyCategory  true  "批量修改账号类型请求"
+// @Success      200  {object} object{data=BatchModifyResult} "全部成功：批量修改结果"
+// @Success      207  {object} object{data=BatchModifyResult} "部分失败：批量修改结果"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/category [patch]
+// @Security     BearerAuth
+func (ctl *ControllerUser) HandleBatchModifyCategory(c *gin.Context) (*gggin.Response[BatchModifyResult], *gggin.HttpError) {
+	_, ok := gggin.Get[*security.GuardResult](c, "guard")
+	if !ok {
+		return nil, ErrHttpGuardFail
+	}
+
+	req, err := gggin.ShouldBindJSON[RequestBatchModifyCategory](c)
+	if err != nil {
+		return nil, gggin.NewHttpError(http.StatusBadRequest, err.Error())
+	}
+
+	var result BatchModifyResult
+	result.Total = len(req.UserIds)
+
+	for _, uid := range req.UserIds {
+		err := ctl.serviceManager.ModifyCategory(uid, req.Category)
+		if err != nil {
+			result.Failed++
+			result.Failures = append(result.Failures, BatchModifyFailure{
+				UserId: uid,
+				Error:  err.Error(),
+			})
+		} else {
+			result.Success++
+		}
+	}
+
+	// 根据结果决定返回方式：全部成功返回200，部分失败返回207
+	if result.Failed > 0 && result.Success > 0 {
+		// 部分失败：使用207 Multi-Status
+		return gggin.NewResponseWithStatusCode(http.StatusMultiStatus, result), nil
+	}
+
+	// 全部成功或全部失败：使用200
+	return gggin.NewResponse(result), nil
+}
+
+// @Summary      批量修改角色权限
+// @Description  批量修改指定用户的角色权限。需要 ADMIN 角色权限。
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      RequestBatchModifyRole  true  "批量修改角色权限请求"
+// @Success      200  {object} object{data=BatchModifyResult} "全部成功：批量修改结果"
+// @Success      207  {object} object{data=BatchModifyResult} "部分失败：批量修改结果"
+// @Failure      400  {object} object{data=string} "请求参数错误"
+// @Failure      401  {object} object{data=string} "未授权访问"
+// @Failure      403  {object} object{data=string} "权限不足"
+// @Failure      500  {object} object{data=string} "服务器内部错误"
+// @Router       /users/role [patch]
+// @Security     BearerAuth
+func (ctl *ControllerUser) HandleBatchModifyRole(c *gin.Context) (*gggin.Response[BatchModifyResult], *gggin.HttpError) {
+	_, ok := gggin.Get[*security.GuardResult](c, "guard")
+	if !ok {
+		return nil, ErrHttpGuardFail
+	}
+
+	req, err := gggin.ShouldBindJSON[RequestBatchModifyRole](c)
+	if err != nil {
+		return nil, gggin.NewHttpError(http.StatusBadRequest, err.Error())
+	}
+
+	var result BatchModifyResult
+	result.Total = len(req.UserIds)
+
+	for _, uid := range req.UserIds {
+		err := ctl.serviceManager.GrantRoleByUidAndRoleName(uid, req.Role)
+		if err != nil {
+			result.Failed++
+			result.Failures = append(result.Failures, BatchModifyFailure{
+				UserId: uid,
+				Error:  err.Error(),
+			})
+		} else {
+			result.Success++
+		}
+	}
+
+	// 根据结果决定返回方式：全部成功返回200，部分失败返回207
+	if result.Failed > 0 && result.Success > 0 {
+		// 部分失败：使用207 Multi-Status
+		return gggin.NewResponseWithStatusCode(http.StatusMultiStatus, result), nil
+	}
+
+	// 全部成功或全部失败：使用200
+	return gggin.NewResponse(result), nil
 }

@@ -1,5 +1,47 @@
 basePath: /api
 definitions:
+  controller.BatchFailureInfo:
+    properties:
+      error:
+        type: string
+      row:
+        type: integer
+      username:
+        type: string
+    type: object
+  controller.BatchModifyFailure:
+    properties:
+      error:
+        type: string
+      userId:
+        type: string
+    type: object
+  controller.BatchModifyResult:
+    properties:
+      failed:
+        type: integer
+      failures:
+        items:
+          $ref: '#/definitions/controller.BatchModifyFailure'
+        type: array
+      success:
+        type: integer
+      total:
+        type: integer
+    type: object
+  controller.BatchRegisterResult:
+    properties:
+      failed:
+        type: integer
+      failures:
+        items:
+          $ref: '#/definitions/controller.BatchFailureInfo'
+        type: array
+      success:
+        type: integer
+      total:
+        type: integer
+    type: object
   controller.CreateTokenRequest:
     properties:
       password:
@@ -9,6 +51,30 @@ definitions:
     required:
     - password
     - username
+    type: object
+  controller.RequestBatchModifyCategory:
+    properties:
+      category:
+        type: string
+      userIds:
+        items:
+          type: string
+        type: array
+    required:
+    - category
+    - userIds
+    type: object
+  controller.RequestBatchModifyRole:
+    properties:
+      role:
+        type: string
+      userIds:
+        items:
+          type: string
+        type: array
+    required:
+    - role
+    - userIds
     type: object
   controller.RequestChangePassword:
     properties:
@@ -210,23 +276,43 @@ paths:
     post:
       consumes:
       - application/json
-      description: 创建新用户账号。需要 ADMIN 角色权限。
+      - multipart/form-data
+      - text/csv
+      description: |-
+        创建新用户账号。支持两种方式：1) JSON格式单个注册 2) CSV文件批量注册。需要 ADMIN 角色权限。
+
+        **单个注册 (application/json)**
+        发送JSON格式的单个用户数据
+
+        **批量注册 (multipart/form-data 或 text/csv)**
+        上传CSV文件，CSV格式为：username,surName,givenName,mail,category,role
+        示例：user001,张,三,zhangsan@example.com,member,default
       parameters:
-      - description: 注册用户请求
+      - description: '单个注册请求 (Content-Type: application/json)'
         in: body
         name: body
-        required: true
         schema:
           $ref: '#/definitions/controller.RequestRegister'
+      - description: '批量注册CSV文件 (Content-Type: multipart/form-data)'
+        in: formData
+        name: file
+        type: file
       produces:
       - application/json
       responses:
         "200":
-          description: 成功注册用户，返回 'ok'
+          description: 批量注册全部成功
           schema:
             properties:
               data:
-                type: string
+                $ref: '#/definitions/controller.BatchRegisterResult'
+            type: object
+        "207":
+          description: 批量注册部分失败
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/controller.BatchRegisterResult'
             type: object
         "400":
           description: 请求参数错误
@@ -251,6 +337,13 @@ paths:
             type: object
         "409":
           description: 用户已存在
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+        "415":
+          description: 不支持的媒体类型
           schema:
             properties:
               data:
@@ -710,6 +803,130 @@ paths:
       security:
       - BearerAuth: []
       summary: 更改账号角色
+      tags:
+      - users
+  /users/category:
+    patch:
+      consumes:
+      - application/json
+      description: 批量修改指定用户的账号类型。需要 ADMIN 角色权限。
+      parameters:
+      - description: 批量修改账号类型请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RequestBatchModifyCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 全部成功：批量修改结果
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/controller.BatchModifyResult'
+            type: object
+        "207":
+          description: 部分失败：批量修改结果
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/controller.BatchModifyResult'
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+        "401":
+          description: 未授权访问
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+        "403":
+          description: 权限不足
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 批量修改账号类型
+      tags:
+      - users
+  /users/role:
+    patch:
+      consumes:
+      - application/json
+      description: 批量修改指定用户的角色权限。需要 ADMIN 角色权限。
+      parameters:
+      - description: 批量修改角色权限请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RequestBatchModifyRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 全部成功：批量修改结果
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/controller.BatchModifyResult'
+            type: object
+        "207":
+          description: 部分失败：批量修改结果
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/controller.BatchModifyResult'
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+        "401":
+          description: 未授权访问
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+        "403":
+          description: 权限不足
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            properties:
+              data:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 批量修改角色权限
       tags:
       - users
 securityDefinitions:
