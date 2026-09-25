@@ -7,41 +7,43 @@ import (
 	"time"
 )
 
+var regexpDigitsOnly = regexp.MustCompile(`^\d+$`)
+
 func ValidateMemberUsernameLegality(username string) error {
-	// 检查长度是否为10
+	// 1. 长度必须为10
 	if len(username) != 10 {
 		return fmt.Errorf("username must be 10 characters long, got %d", len(username))
 	}
 
-	// 检查是否全为数字
-	pattern := `^\d+$`
-	re := regexp.MustCompile(pattern)
-	if !re.MatchString(username) {
+	// 2. 必须全为数字
+	if !regexpDigitsOnly.MatchString(username) {
 		return fmt.Errorf("username must be all digits, got %s", username)
 	}
 
-	// 检查前4位是否为有效年份
-	yearStr := username[:4]
-	year, err := strconv.Atoi(yearStr)
-	if err != nil {
-		return fmt.Errorf("the first 4 characters must be a valid year, got %s: %w", yearStr, err)
+	currentYear := time.Now().Year()
+	minYear, maxYear := 2000, currentYear+5
+
+	var year int
+
+	// 研究生学号：3 + 2位年份 + 7位其他数字
+	if username[0] == '3' {
+		shortYearStr := username[1:3] // 取第2、3位
+		shortYear, err := strconv.Atoi(shortYearStr)
+		if err != nil {
+			return fmt.Errorf("the 2nd-3rd characters must be a valid 2-digit year, got %s: %w", shortYearStr, err)
+		}
+		year = 2000 + shortYear
+	} else {
+		yearStr := username[:4] // 普通学号：前4位是年份
+		y, err := strconv.Atoi(yearStr)
+		if err != nil {
+			return fmt.Errorf("the first 4 characters must be a valid year, got %s: %w", yearStr, err)
+		}
+		year = y
 	}
 
-	// 获取当前年份
-	currentYear := time.Now().Year()
-
-	// 假设年份范围：2000年至当前年份后5年
-	minYear := 2000
-	maxYear := currentYear + 5
-
 	if year < minYear || year > maxYear {
-		if username[0] == '3' {
-			number, _ := strconv.Atoi(username[1:3])
-			if number < 30 {
-				return nil
-			}
-		}
-		return fmt.Errorf("the year in the first 4 characters must be between %d and %d, got %d", minYear, maxYear, year)
+		return fmt.Errorf("the year must be between %d and %d, got %d", minYear, maxYear, year)
 	}
 
 	return nil
