@@ -35,6 +35,12 @@ func ValidateMemberUsernameLegality(username string) error {
 	maxYear := currentYear + 5
 
 	if year < minYear || year > maxYear {
+		if username[0] == '3' {
+			number, _ := strconv.Atoi(username[1:3])
+			if number < 30 {
+				return nil
+			}
+		}
 		return fmt.Errorf("the year in the first 4 characters must be between %d and %d, got %d", minYear, maxYear, year)
 	}
 
